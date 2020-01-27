@@ -19,8 +19,8 @@ web-sys = ["web_sys", "js-sys", "wasm-bindgen"]
 [dependencies]
 futures-util = { version = "0.3.1", default-features = false, features = ["alloc"] }
 std_web = { version = "0.4.20", package = "stdweb", features = ["futures-support"], optional = true }
-js-sys = { versions = "*", package = "js-sys", optional = true }
-web_sys = { version = "*", package = "web-sys", optional = true }
+js-sys = { versions = "0.3", package = "js-sys", optional = true }
+web_sys = { version = "0.3", package = "web-sys", optional = true }
 wasm-bindgen = { version = "0.2.45", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.async-std]
