@@ -20,7 +20,7 @@ stdweb = ["quicksilver/stdweb","quicksilver-utils-async/stdweb"]
 web-sys = ["web_sys", "quicksilver/web-sys", "quicksilver-utils-async/web-sys", "wee_alloc"]
 
 [dependencies]
-log = "*"
+log = "0.4"
 quicksilver = { version = "=0.4.0-alpha0" }
 quicksilver-utils-async = { path = "../../quicksilver-utils-async" }
 wasm-bindgen = "0.2.45"
