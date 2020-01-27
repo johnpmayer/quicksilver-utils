@@ -1,8 +1,12 @@
 [package]
 name = "quicksilver-utils-async"
+description = "Utilities for projects using https://github.com/ryanisaacg/quicksilver"
 version = "0.1.0"
 authors = ["John P Mayer Jr <john.p.mayer.jr@gmail.com>"]
 edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "Readme.md"
+repository = "https://github.com/johnpmayer/quicksilver-utils"
 
 [package.metadata.docs.rs]
 all-features = true
