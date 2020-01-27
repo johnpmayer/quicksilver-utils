@@ -1,0 +1,36 @@
+
+[package]
+name = "quicksilver-utils-project"
+version = "0.1.0"
+authors = ["John P Mayer Jr <john.p.mayer.jr@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib","rlib"]
+
+[[bin]]
+name = "index" # This is because cargo-web also picks up the static assets folder...
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+
+[features]
+stdweb = ["quicksilver/stdweb","quicksilver-utils-async/stdweb"]
+web-sys = ["web_sys", "quicksilver/web-sys", "quicksilver-utils-async/web-sys", "wee_alloc"]
+
+[dependencies]
+log = "*"
+quicksilver = { version = "=0.4.0-alpha0" }
+quicksilver-utils-async = { path = "../../quicksilver-utils-async" }
+wasm-bindgen = "0.2.45"
+wee_alloc = { version = "0.4.2", optional = true }
+
+[dependencies.web_sys]
+version = "0.3.22"
+package = "web-sys"
+features = ["console"]
+optional = true
+
+[target."cfg(debug_assertions)".dependencies]
+console_error_panic_hook = "0.1.5"
