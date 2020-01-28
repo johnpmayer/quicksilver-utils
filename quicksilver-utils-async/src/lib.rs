@@ -27,3 +27,4 @@ mod web_sys;
 
 pub mod task_context;
 pub mod time;
+pub mod websocket;
