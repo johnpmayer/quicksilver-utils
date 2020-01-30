@@ -2,7 +2,7 @@ extern crate log;
 extern crate quicksilver;
 extern crate url;
 
-use log::{info, trace};
+use log::{info, debug};
 use quicksilver_utils_async::{task_context::TaskContext, time::sleep_ms, websocket::{WebSocket, WebSocketMessage}};
 
 use quicksilver::{
@@ -44,11 +44,13 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
         cloned_task_context.dispatch(CustomEvent::OnePingOnly);
     });
 
-    let ws = WebSocket::connect(Url::parse("wss://echo.websocket.org").unwrap()).await.unwrap();
+
+    let url_string = "ws://echo.websocket.org";
+    // let url_string = "wss://echo.websocket.org"; // fails TLS?
+    let ws = WebSocket::connect(&Url::parse(url_string).unwrap()).await.unwrap();
     task_context.spawn(read_websocket_loop(task_context.clone(), ws.clone()));
 
     'main: loop {
-        trace!("Main loop wrapped around");
         task_context.run_until_stalled().await;
 
         for custom_event in task_context.drain().into_iter() {
@@ -78,10 +80,10 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
                 state: ElementState::Pressed,
             } = ev
             {
-                ws.send("Hello free infrastructure").unwrap();
+                ws.send("Hello free infrastructure").await.unwrap();
             }
 
-            info!("BlindsEvent: {:?}", ev);
+            debug!("BlindsEvent: {:?}", ev);
         }
     }
 

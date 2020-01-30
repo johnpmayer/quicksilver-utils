@@ -13,10 +13,10 @@ Mostly this implies two things about each component
 ## Current
 
 * Cooperative tasks with an event buffer
-* Blocking sleep() function
+* Async sleep() function
+* Async Websocket Client
 
 ## Planned
 
-* Blocking Websocket Client
-* Blocking HTTP Client
-* More sophistocated timers
+* Async HTTP Client (look at surf and tide)
+* More sophistocated timers (look at async-timer)

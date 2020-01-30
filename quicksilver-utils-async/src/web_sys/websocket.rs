@@ -11,10 +11,11 @@ use std::task::{Poll, Waker};
 use futures_util::future::poll_fn;
 use wasm_bindgen::prelude::{Closure, JsValue};
 use wasm_bindgen::JsCast;
-use web_sys::console;
 use url::Url;
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
+
+use log::trace;
 
 impl From<JsValue> for WebSocketError {
     fn from(js_value: JsValue) -> Self {
@@ -48,13 +49,8 @@ impl Clone for AsyncWebSocket {
     }
 }
 
-// TODO: look at <https://github.com/najamelan/ws_stream_wasm>
-// for examples of handling all of the status codes!
-
-// #[async_trait]
 impl AsyncWebSocket {
-    // TODO: this needs to take a URL... maybe only support SSL?
-    pub async fn connect(url: Url) -> Result<Self, WebSocketError> {
+    pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
         let ws = WebSocket::new(url.as_str())?;
         ws.set_binary_type(BinaryType::Arraybuffer);
         let async_ws: AsyncWebSocket = {
@@ -75,7 +71,7 @@ impl AsyncWebSocket {
         let onopen_callback = {
             let async_ws = async_ws.clone();
             Closure::wrap(Box::new(move |_| {
-                console::log_1(&JsValue::from_str("Websocket onopen callback!")); // TODO: debug logging
+                trace!("Websocket onopen callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.state = SocketState::Open;
                 if let Some(waker) = inner.waker.take() {
@@ -89,7 +85,7 @@ impl AsyncWebSocket {
         let onclose_callback = {
             let async_ws = async_ws.clone();
             Closure::wrap(Box::new(move |_| {
-                console::log_1(&JsValue::from_str("Websocket onclose callback!")); // TODO: debug logging
+                trace!("Websocket onclose callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.state = SocketState::Closed;
                 if let Some(waker) = inner.waker.take() {
@@ -103,7 +99,7 @@ impl AsyncWebSocket {
         let onerror_callback = {
             let async_ws = async_ws.clone();
             Closure::wrap(Box::new(move |err: JsValue| {
-                console::log_1(&JsValue::from_str("Websocket onerror callback!")); // TODO: debug logging
+                trace!("Websocket onerror callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.state = SocketState::Error(err.as_string().unwrap());
                 if let Some(waker) = inner.waker.take() {
@@ -117,7 +113,7 @@ impl AsyncWebSocket {
         let onmessage_callback = {
             let async_ws = async_ws.clone();
             Closure::wrap(Box::new(move |ev: MessageEvent| {
-                console::log_1(&JsValue::from_str("Websocket onmessage callback!")); // TODO: debug logging
+                trace!("Websocket onmessage callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.buffer.push_back(ev);
                 if let Some(waker) = inner.waker.take() {
@@ -131,7 +127,7 @@ impl AsyncWebSocket {
         poll_fn({
             let async_ws = async_ws.clone();
             move |cx| {
-                console::log_1(&JsValue::from_str("Polling"));
+                trace!("Polling");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 match &inner.state {
                     SocketState::Init => {
@@ -151,20 +147,17 @@ impl AsyncWebSocket {
         Ok(async_ws)
     }
 
-    // TODO: should this be a result? what error would there be
-    pub fn send(&self, msg: &str) -> Result<(), WebSocketError> {
-        console::log_1(&JsValue::from_str("Send"));
+    pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
+        trace!("Send");
         let inner: &mut AsyncWebSocketInner = &mut *self.inner.borrow_mut();
         inner.ws.send_with_str(msg)?;
         Ok(())
     }
 
-    // <https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent>
     pub async fn receive(&self) -> Result<WebSocketMessage, WebSocketError> {
-        console::log_1(&JsValue::from_str("Recieve (blocking)"));
         let message_event = poll_fn({
             move |cx| {
-                console::log_1(&JsValue::from_str("Polling"));
+                trace!("Polling");
                 let inner: &mut AsyncWebSocketInner = &mut *self.inner.borrow_mut();
                 match &inner.state {
                     SocketState::Init => Poll::Ready(Err(WebSocketError::StateInit)),
@@ -185,9 +178,8 @@ impl AsyncWebSocket {
         })
         .await?;
 
-        // info!("Websocket message: {:?}", message_event);
         let data: JsValue = message_event.data();
-        console::log_1(&data);
+        trace!("{:?}", &data);
 
         let message = match data.as_string() {
             Some(s) => WebSocketMessage::String(s),
