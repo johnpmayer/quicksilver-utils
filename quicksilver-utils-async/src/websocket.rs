@@ -1,4 +1,6 @@
 
+use url::Url;
+
 #[derive(Debug)]
 pub enum WebSocketError {
     NativeError(String),
@@ -14,7 +16,28 @@ pub enum WebSocketMessage {
 }
 
 #[cfg(all(target_arch = "wasm32", feature = "web-sys"))]
-pub type WebSocket = crate::web_sys::websocket::AsyncWebSocket;
+type WebSocketInner = crate::web_sys::websocket::AsyncWebSocket;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub type WebSocket = crate::desktop::websocket::AsyncWebSocket;
+type WebSocketInner = crate::desktop::websocket::AsyncWebSocket;
+
+#[derive(Clone)]
+pub struct WebSocket {
+    inner: WebSocketInner,
+}
+
+impl WebSocket {
+    pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
+        let inner = WebSocketInner::connect(url).await?;
+        Ok(WebSocket{inner})
+    }
+
+    // TODO: send binary
+    pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
+        self.inner.send(msg).await
+    }
+
+    pub async fn receive(&self) -> Result<WebSocketMessage, WebSocketError> {
+        self.inner.receive().await
+    }
+}
