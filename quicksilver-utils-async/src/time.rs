@@ -1,4 +1,4 @@
-//! # Time
+//! # time
 //!
 //! `time` just contains `sleep_ms` right not, but is the place
 //! where I'd put something like a timer or something more

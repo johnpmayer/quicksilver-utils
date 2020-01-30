@@ -1,28 +1,24 @@
-use web_sys::{BinaryType, MessageEvent, WebSocket};
-use js_sys::{ArrayBuffer, Uint8Array};
-
-use std::cell::RefCell;
-use std::sync::Arc;
-
-use std::collections::VecDeque;
-
-use std::task::{Poll, Waker};
 
 use futures_util::future::poll_fn;
-use wasm_bindgen::prelude::{Closure, JsValue};
-use wasm_bindgen::JsCast;
+use std::sync::Arc;
+use std::cell::RefCell;
+use std::task::{Poll, Waker};
+use std::collections::VecDeque;
 use url::Url;
+
+// annoying the re-naming of this package...
+use std_web::web::{
+    WebSocket, SocketBinaryType, IEventTarget, TypedArray,
+    event::{
+        SocketOpenEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent, IMessageEvent, SocketMessageData,
+    },
+};
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
 
-use log::trace;
+use log::{debug, trace};
 
-impl From<JsValue> for WebSocketError {
-    fn from(js_value: JsValue) -> Self {
-        WebSocketError::NativeError(js_value.as_string().unwrap())
-    }
-}
-
+// TODO: not DRY
 enum SocketState {
     Init,
     Open,
@@ -30,11 +26,12 @@ enum SocketState {
     Closed,
 }
 
+// TODO: not DRY
 struct AsyncWebSocketInner {
     ws: WebSocket,
     state: SocketState,
     waker: Option<Waker>,
-    buffer: VecDeque<MessageEvent>,
+    buffer: VecDeque<SocketMessageEvent>,
 }
 
 pub struct AsyncWebSocket {
@@ -42,17 +39,14 @@ pub struct AsyncWebSocket {
 }
 
 impl Clone for AsyncWebSocket {
-    fn clone(&self) -> Self {
-        AsyncWebSocket {
-            inner: self.inner.clone(),
-        }
-    }
+    fn clone(&self) -> Self { AsyncWebSocket { inner: self.inner.clone() }}
 }
 
 impl AsyncWebSocket {
     pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
-        let ws = WebSocket::new(url.as_str())?;
-        ws.set_binary_type(BinaryType::Arraybuffer);
+        let ws = WebSocket::new(url.as_str()).map_err(|_| WebSocketError::NativeError("Creation".to_string()))?;
+        ws.set_binary_type(SocketBinaryType::ArrayBuffer);
+
         let async_ws: AsyncWebSocket = {
             let ws = ws.clone();
             let state = SocketState::Init;
@@ -68,61 +62,53 @@ impl AsyncWebSocket {
             AsyncWebSocket { inner }
         };
 
-        let onopen_callback = {
+        ws.add_event_listener({
             let async_ws = async_ws.clone();
-            Closure::wrap(Box::new(move |_| {
+            move |_: SocketOpenEvent| {
                 trace!("Websocket onopen callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.state = SocketState::Open;
                 if let Some(waker) = inner.waker.take() {
                     waker.wake()
                 }
-            }) as Box<dyn FnMut(JsValue)>)
-        };
-        ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
-        onopen_callback.forget();
+            }
+        });
 
-        let onclose_callback = {
+        ws.add_event_listener({
             let async_ws = async_ws.clone();
-            Closure::wrap(Box::new(move |_| {
+            move |_: SocketCloseEvent| {
                 trace!("Websocket onclose callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
                 inner.state = SocketState::Closed;
                 if let Some(waker) = inner.waker.take() {
                     waker.wake()
                 }
-            }) as Box<dyn FnMut(JsValue)>)
-        };
-        ws.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));
-        onclose_callback.forget();
+            }
+        });
 
-        let onerror_callback = {
+        ws.add_event_listener({
             let async_ws = async_ws.clone();
-            Closure::wrap(Box::new(move |err: JsValue| {
+            move |error_event: SocketErrorEvent| {
                 trace!("Websocket onerror callback!");
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
-                inner.state = SocketState::Error(err.as_string().unwrap());
+                let error_message = format!("{:?}", error_event);
+                inner.state = SocketState::Error(error_message);
                 if let Some(waker) = inner.waker.take() {
                     waker.wake()
                 }
-            }) as Box<dyn FnMut(JsValue)>)
-        };
-        ws.set_onerror(Some(onerror_callback.as_ref().unchecked_ref()));
-        onerror_callback.forget();
+            }
+        });
 
-        let onmessage_callback = {
+        ws.add_event_listener({
             let async_ws = async_ws.clone();
-            Closure::wrap(Box::new(move |ev: MessageEvent| {
-                trace!("Websocket onmessage callback!");
+            move |message_event: SocketMessageEvent| {
                 let inner: &mut AsyncWebSocketInner = &mut *async_ws.inner.borrow_mut();
-                inner.buffer.push_back(ev);
+                inner.buffer.push_back(message_event);
                 if let Some(waker) = inner.waker.take() {
                     waker.wake()
                 }
-            }) as Box<dyn FnMut(MessageEvent)>)
-        };
-        ws.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));
-        onmessage_callback.forget();
+            }
+        });
 
         poll_fn({
             let async_ws = async_ws.clone();
@@ -149,8 +135,8 @@ impl AsyncWebSocket {
 
     pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
         trace!("Send");
-        let inner: &mut AsyncWebSocketInner = &mut *self.inner.borrow_mut();
-        inner.ws.send_with_str(msg)?;
+        let inner: &AsyncWebSocketInner = &self.inner.borrow();
+        inner.ws.send_text(msg).map_err(|_| WebSocketError::NativeError("Send".to_string()))?;
         Ok(())
     }
 
@@ -178,16 +164,16 @@ impl AsyncWebSocket {
         })
         .await?;
 
-        let data: JsValue = message_event.data();
-        trace!("{:?}", &data);
+        let data = message_event.data();
+        debug!("{:?}", &data);
 
-        let message = match data.as_string() {
-            Some(s) => WebSocketMessage::String(s),
-            None => {
-                let buf: &ArrayBuffer = data.as_ref().unchecked_ref(); // consider using JsCast::dyn_into for safety?
-                let vec: Vec<u8> = Uint8Array::new(buf).to_vec();
-                WebSocketMessage::Binary(vec)
+        let message = match data {
+            SocketMessageData::Text(s) => WebSocketMessage::String(s),
+            SocketMessageData::ArrayBuffer(buf) => {
+                let t_buffer: TypedArray<u8> = TypedArray::from(buf);
+                WebSocketMessage::Binary(t_buffer.to_vec())
             }
+            SocketMessageData::Blob(_) => panic!("binary should have been set to array buffer above..."),
         };
 
         Ok(message)
