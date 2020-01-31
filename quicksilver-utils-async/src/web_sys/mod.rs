@@ -3,3 +3,4 @@ extern crate wasm_bindgen;
 extern crate web_sys;
 
 pub(crate) mod time;
+pub(crate) mod websocket;

@@ -7,8 +7,9 @@ use wasm_bindgen::JsCast;
 
 use futures_util::future::poll_fn;
 use js_sys::Array;
-use web_sys::console;
 use web_sys::window;
+
+use log::trace;
 
 struct ReadyWaker {
     ready: bool,
@@ -26,7 +27,7 @@ pub async fn sleep_ms(ms: u32) {
     let callback = {
         let ready_waker = ready_waker.clone();
         Closure::wrap(Box::new(move |_| {
-            console::log_1(&JsValue::from_str("set_timeout callback!")); // TODO: debug logging
+            trace!("set_timeout callback!");
             let inner: &mut ReadyWaker = &mut *ready_waker.borrow_mut();
             inner.ready = true;
             if let Some(waker) = inner.waker.take() {
@@ -47,7 +48,7 @@ pub async fn sleep_ms(ms: u32) {
     poll_fn({
         let ready_waker = ready_waker.clone();
         move |cx| {
-            console::log_1(&JsValue::from_str("Polling"));
+            trace!("Polling");
             let inner: &mut ReadyWaker = &mut *ready_waker.borrow_mut();
             if inner.ready {
                 Poll::Ready(())
