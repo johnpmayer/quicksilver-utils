@@ -1,17 +1,17 @@
-
 use futures_util::future::poll_fn;
-use std::sync::Arc;
 use std::cell::RefCell;
-use std::task::{Poll, Waker};
 use std::collections::VecDeque;
+use std::sync::Arc;
+use std::task::{Poll, Waker};
 use url::Url;
 
 // annoying the re-naming of this package...
 use std_web::web::{
-    WebSocket, SocketBinaryType, IEventTarget, TypedArray,
     event::{
-        SocketOpenEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent, IMessageEvent, SocketMessageData,
+        IMessageEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageData, SocketMessageEvent,
+        SocketOpenEvent,
     },
+    IEventTarget, SocketBinaryType, TypedArray, WebSocket,
 };
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
@@ -39,12 +39,17 @@ pub struct AsyncWebSocket {
 }
 
 impl Clone for AsyncWebSocket {
-    fn clone(&self) -> Self { AsyncWebSocket { inner: self.inner.clone() }}
+    fn clone(&self) -> Self {
+        AsyncWebSocket {
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 impl AsyncWebSocket {
     pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
-        let ws = WebSocket::new(url.as_str()).map_err(|_| WebSocketError::NativeError("Creation".to_string()))?;
+        let ws = WebSocket::new(url.as_str())
+            .map_err(|_| WebSocketError::NativeError("Creation".to_string()))?;
         ws.set_binary_type(SocketBinaryType::ArrayBuffer);
 
         let async_ws: AsyncWebSocket = {
@@ -136,7 +141,10 @@ impl AsyncWebSocket {
     pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
         trace!("Send");
         let inner: &AsyncWebSocketInner = &self.inner.borrow();
-        inner.ws.send_text(msg).map_err(|_| WebSocketError::NativeError("Send".to_string()))?;
+        inner
+            .ws
+            .send_text(msg)
+            .map_err(|_| WebSocketError::NativeError("Send".to_string()))?;
         Ok(())
     }
 
@@ -173,7 +181,9 @@ impl AsyncWebSocket {
                 let t_buffer: TypedArray<u8> = TypedArray::from(buf);
                 WebSocketMessage::Binary(t_buffer.to_vec())
             }
-            SocketMessageData::Blob(_) => panic!("binary should have been set to array buffer above..."),
+            SocketMessageData::Blob(_) => {
+                panic!("binary should have been set to array buffer above...")
+            }
         };
 
         Ok(message)

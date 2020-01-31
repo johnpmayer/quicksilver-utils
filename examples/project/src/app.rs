@@ -2,8 +2,12 @@ extern crate log;
 extern crate quicksilver;
 extern crate url;
 
-use log::{info, debug};
-use quicksilver_utils_async::{task_context::TaskContext, time::sleep_ms, websocket::{WebSocket, WebSocketMessage}};
+use log::{debug, info};
+use quicksilver_utils_async::{
+    task_context::TaskContext,
+    time::sleep_ms,
+    websocket::{WebSocket, WebSocketMessage},
+};
 
 use quicksilver::{
     graphics::Graphics,
@@ -44,10 +48,11 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
         cloned_task_context.dispatch(CustomEvent::OnePingOnly);
     });
 
-
     let url_string = "ws://echo.websocket.org";
     // let url_string = "wss://echo.websocket.org"; // fails TLS?
-    let ws = WebSocket::connect(&Url::parse(url_string).unwrap()).await.unwrap();
+    let ws = WebSocket::connect(&Url::parse(url_string).unwrap())
+        .await
+        .unwrap();
     task_context.spawn(read_websocket_loop(task_context.clone(), ws.clone()));
 
     'main: loop {

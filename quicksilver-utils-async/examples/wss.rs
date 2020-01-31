@@ -17,7 +17,7 @@ fn main() -> io::Result<()> {
     let addr = url.socket_addrs(|| port).expect("url lookup via dns")[0];
     let domain = url.host_str().expect("url host");
     // let domain = "websocket.org";
-    
+
     // Create a bare bones HTTP GET request
     let http_request = format!("GET / HTTP/1.0\r\nHost: {}\r\n\r\n", domain);
 

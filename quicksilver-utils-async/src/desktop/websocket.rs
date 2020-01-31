@@ -1,20 +1,19 @@
-
-use url::Url;
 use futures_io::{AsyncRead, AsyncWrite};
+use url::Url;
 
 use async_std::net::TcpStream;
 use async_tls::TlsConnector;
 use soketto::{
-    handshake::{Client, ServerResponse, Error as HandshakeError},
-    connection::{Sender, Receiver, Error as ConnectionError}
+    connection::{Error as ConnectionError, Receiver, Sender},
+    handshake::{Client, Error as HandshakeError, ServerResponse},
 };
-use std::io::{Error as IoError};
-use std::sync::Arc;
 use std::cell::RefCell;
+use std::io::Error as IoError;
+use std::sync::Arc;
 
-use log::{debug};
+use log::debug;
 
-use crate::{websocket::{WebSocketError, WebSocketMessage}};
+use crate::websocket::{WebSocketError, WebSocketMessage};
 
 #[derive(Clone)]
 pub struct AsyncWebSocket {
@@ -42,7 +41,7 @@ impl From<IoError> for WebSocketError {
 
 trait AsyncStream: AsyncRead + AsyncWrite + Unpin {}
 
-impl <T: AsyncRead + AsyncWrite + Unpin> AsyncStream for T {} 
+impl<T: AsyncRead + AsyncWrite + Unpin> AsyncStream for T {}
 
 impl AsyncWebSocket {
     async fn client(url: &Url) -> Result<Client<'_, Box<dyn AsyncStream>>, WebSocketError> {
@@ -56,7 +55,10 @@ impl AsyncWebSocket {
 
         let boxed_stream: Box<dyn AsyncStream> = if scheme == "wss" {
             // TODO: this hasn't yet been proven to work...
-            debug!("Starting TLS handshake for secure websocket with domain {}", host);
+            debug!(
+                "Starting TLS handshake for secure websocket with domain {}",
+                host
+            );
             let connector = TlsConnector::default();
             let handshake = connector.connect(host, transport_stream)?;
             let tls_stream = handshake.await?;
@@ -65,17 +67,17 @@ impl AsyncWebSocket {
         } else {
             Box::new(transport_stream)
         };
-        
+
         Ok(Client::new(boxed_stream, host, path))
     }
 
     pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
         let mut client = AsyncWebSocket::client(url).await?;
-        
+
         let (sender, receiver) = match client.handshake().await? {
             ServerResponse::Accepted { .. } => client.into_builder().finish(),
             ServerResponse::Redirect { .. } => unimplemented!("follow location URL"),
-            ServerResponse::Rejected { .. } => unimplemented!("handle failure")
+            ServerResponse::Rejected { .. } => unimplemented!("handle failure"),
         };
 
         let sender = Arc::new(RefCell::new(sender));
@@ -98,7 +100,8 @@ impl AsyncWebSocket {
             WebSocketMessage::Binary(Vec::from(data_slice))
         } else {
             let data_slice: &[u8] = data.as_ref();
-            let s = String::from_utf8(Vec::from(data_slice)).map_err(|_| WebSocketError::NativeError("invalid ut8".to_string()))?;
+            let s = String::from_utf8(Vec::from(data_slice))
+                .map_err(|_| WebSocketError::NativeError("invalid ut8".to_string()))?;
             WebSocketMessage::String(s)
         };
         Ok(message)

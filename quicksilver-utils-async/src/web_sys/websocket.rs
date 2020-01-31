@@ -1,5 +1,5 @@
-use web_sys::{BinaryType, MessageEvent, WebSocket};
 use js_sys::{ArrayBuffer, Uint8Array};
+use web_sys::{BinaryType, MessageEvent, WebSocket};
 
 use std::cell::RefCell;
 use std::sync::Arc;
@@ -9,9 +9,9 @@ use std::collections::VecDeque;
 use std::task::{Poll, Waker};
 
 use futures_util::future::poll_fn;
+use url::Url;
 use wasm_bindgen::prelude::{Closure, JsValue};
 use wasm_bindgen::JsCast;
-use url::Url;
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
 

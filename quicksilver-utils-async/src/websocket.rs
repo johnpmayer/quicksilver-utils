@@ -1,5 +1,5 @@
 //! # websocket
-//! 
+//!
 //! An async websocket client that can send and recieve. The
 //! `WebSocket` is cloneable, so reading and writing can happen
 //! on separate futures.
@@ -36,7 +36,7 @@ pub struct WebSocket {
 impl WebSocket {
     pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
         let inner = WebSocketInner::connect(url).await?;
-        Ok(WebSocket{inner})
+        Ok(WebSocket { inner })
     }
 
     // TODO: send binary
