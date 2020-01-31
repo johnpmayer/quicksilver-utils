@@ -25,13 +25,19 @@ impl<'a, E> Clone for TaskContext<'a, E> {
     }
 }
 
-impl<'a, E> TaskContext<'a, E> {
-    pub fn new() -> Self {
+impl<'a, E> Default for TaskContext<'a, E> {
+    fn default() -> Self {
         TaskContext {
             events: Arc::new(RefCell::new(Vec::new())),
             futures: Arc::new(RefCell::new(FuturesUnordered::new())),
             task_waker: Arc::new(RefCell::new(None)),
         }
+    }
+}
+
+impl<'a, E> TaskContext<'a, E> {
+    pub fn new() -> Self {
+        TaskContext::default()
     }
 
     pub async fn run_until_stalled(&mut self) {

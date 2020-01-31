@@ -24,14 +24,14 @@ enum CustomEvent {
     EchoResponse(WebSocketMessage),
 }
 
-async fn tick_loop<'a>(task_context: TaskContext<'a, CustomEvent>) {
+async fn tick_loop(task_context: TaskContext<'_, CustomEvent>) {
     loop {
         task_context.dispatch(CustomEvent::Ticked);
         sleep_ms(500).await
     }
 }
 
-async fn read_websocket_loop<'a>(task_context: TaskContext<'a, CustomEvent>, ws: WebSocket) {
+async fn read_websocket_loop(task_context: TaskContext<'_, CustomEvent>, ws: WebSocket) {
     loop {
         let message: WebSocketMessage = ws.receive().await.unwrap();
         task_context.dispatch(CustomEvent::EchoResponse(message))
