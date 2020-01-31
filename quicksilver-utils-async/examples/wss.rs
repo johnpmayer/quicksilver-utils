@@ -1,3 +1,4 @@
+//! This file only exists to debug the issues with connecting to wss on desktop, which seems broken
 
 use async_std::io;
 use async_std::net::TcpStream;

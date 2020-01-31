@@ -93,8 +93,14 @@ impl AsyncWebSocket {
 
     pub async fn receive(&self) -> Result<WebSocketMessage, WebSocketError> {
         let data = self.receiver.borrow_mut().receive_data().await?;
-        // TODO: this is a lie; really ought to check text/binary...
-        let data_slice: &[u8] = data.as_ref();
-        Ok(WebSocketMessage::Binary(Vec::from(data_slice)))
+        let message = if data.is_binary() {
+            let data_slice: &[u8] = data.as_ref();
+            WebSocketMessage::Binary(Vec::from(data_slice))
+        } else {
+            let data_slice: &[u8] = data.as_ref();
+            let s = String::from_utf8(Vec::from(data_slice)).map_err(|_| WebSocketError::NativeError("invalid ut8".to_string()))?;
+            WebSocketMessage::String(s)
+        };
+        Ok(message)
     }
 }
