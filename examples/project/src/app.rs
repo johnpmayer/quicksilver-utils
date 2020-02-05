@@ -4,8 +4,9 @@ extern crate url;
 
 use log::{debug, info};
 use quicksilver_utils_async::{
-    task_context::TaskContext,
-    time::sleep_ms,
+    request::get_resource,
+    task_context::TaskContext, 
+    time::sleep_ms, 
     websocket::{WebSocket, WebSocketMessage},
 };
 
@@ -22,6 +23,7 @@ enum CustomEvent {
     OnePingOnly,
     Ticked,
     EchoResponse(WebSocketMessage),
+    Resource(String),
 }
 
 async fn tick_loop(task_context: TaskContext<'_, CustomEvent>) {
@@ -86,6 +88,19 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
             } = ev
             {
                 ws.send("Hello free infrastructure").await.unwrap();
+            }
+
+            if let BlindsEvent::KeyboardInput {
+                key: Key::R,
+                state: ElementState::Pressed,
+            } = ev
+            {
+                let cloned_task_context = task_context.clone();
+                task_context
+                .spawn(async move {
+                    let response = get_resource("https://postman-echo.com/get?foo1=bar1&foo2=bar2").await.expect("HTTP GET success");
+                    cloned_task_context.dispatch(CustomEvent::Resource(response))
+                });
             }
 
             debug!("BlindsEvent: {:?}", ev);
