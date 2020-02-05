@@ -7,7 +7,7 @@ conceievably be useful in any cross-platform async project.
 
 Mostly this implies two things about each component
 
-1. Runs on desktop and on the web (primarily targeting stdweb for now)
+1. Runs on desktop and on the web (both cargo-web and wasm-bindgen)
 2. Async api
 
 ## Current
@@ -15,8 +15,8 @@ Mostly this implies two things about each component
 * Cooperative tasks with an event buffer
 * Async sleep() function
 * Async Websocket Client
+* Async HTTP Client
 
 ## Planned
 
-* Async HTTP Client (look at surf and tide)
 * More sophistocated timers (look at async-timer)
