@@ -51,7 +51,7 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
     });
 
     let url_string = "ws://echo.websocket.org";
-    // let url_string = "wss://echo.websocket.org"; // fails TLS?
+    // let url_string = "wss://echo.websocket.org"; // fails TLS on desktop?
     let ws = WebSocket::connect(&Url::parse(url_string).unwrap())
         .await
         .unwrap();
@@ -98,7 +98,7 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
                 let cloned_task_context = task_context.clone();
                 task_context
                 .spawn(async move {
-                    let response = get_resource("https://postman-echo.com/get?foo1=bar1&foo2=bar2").await.expect("HTTP GET success");
+                    let response = get_resource("https://jsonplaceholder.typicode.com/todos/1").await.expect("HTTP GET success");
                     cloned_task_context.dispatch(CustomEvent::Resource(response))
                 });
             }
