@@ -25,6 +25,7 @@ mod std_web;
 #[cfg(all(target_arch = "wasm32", feature = "web-sys"))]
 mod web_sys;
 
+pub mod request;
 pub mod task_context;
 pub mod time;
 pub mod websocket;
