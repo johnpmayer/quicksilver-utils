@@ -1,4 +1,3 @@
-
 #[derive(Debug)]
 pub enum RequestError {
     NativeError(String),
