@@ -12,7 +12,7 @@ use quicksilver_utils_async::{
 
 use quicksilver::{
     graphics::Graphics,
-    lifecycle::{ElementState, Event as BlindsEvent, EventStream, Key, Window},
+    lifecycle::{Event as BlindsEvent, EventStream, Key, Window},
     Result,
 };
 
@@ -65,43 +65,31 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
         }
 
         while let Some(ev) = event_stream.next_event().await {
-            if let BlindsEvent::KeyboardInput {
-                key: Key::Escape, ..
-            } = ev
-            {
-                break 'main;
-            }
+            if let BlindsEvent::KeyboardInput(key_event) = &ev {
+                if key_event.key() == Key::Escape && key_event.is_down() {
+                    break 'main;
+                }
 
-            if let BlindsEvent::KeyboardInput {
-                key: Key::P,
-                state: ElementState::Pressed,
-            } = ev
-            {
-                let cloned_task_context = task_context.clone();
-                task_context
-                    .spawn(async move { cloned_task_context.dispatch(CustomEvent::OnePingOnly) });
-            }
+                if key_event.key() == Key::P && key_event.is_down() {
+                    let cloned_task_context = task_context.clone();
+                    task_context.spawn(async move {
+                        cloned_task_context.dispatch(CustomEvent::OnePingOnly)
+                    });
+                }
 
-            if let BlindsEvent::KeyboardInput {
-                key: Key::W,
-                state: ElementState::Pressed,
-            } = ev
-            {
-                ws.send("Hello free infrastructure").await.unwrap();
-            }
+                if key_event.key() == Key::W && key_event.is_down() {
+                    ws.send("Hello free infrastructure").await.unwrap();
+                }
 
-            if let BlindsEvent::KeyboardInput {
-                key: Key::R,
-                state: ElementState::Pressed,
-            } = ev
-            {
-                let cloned_task_context = task_context.clone();
-                task_context.spawn(async move {
-                    let response = get_resource("https://jsonplaceholder.typicode.com/todos/1")
-                        .await
-                        .expect("HTTP GET success");
-                    cloned_task_context.dispatch(CustomEvent::Resource(response))
-                });
+                if key_event.key() == Key::R && key_event.is_down() {
+                    let cloned_task_context = task_context.clone();
+                    task_context.spawn(async move {
+                        let response = get_resource("https://jsonplaceholder.typicode.com/todos/1")
+                            .await
+                            .expect("HTTP GET success");
+                        cloned_task_context.dispatch(CustomEvent::Resource(response))
+                    });
+                }
             }
 
             debug!("BlindsEvent: {:?}", ev);
