@@ -1,0 +1,29 @@
+[package]
+name = "quicksilver-utils-ecs"
+description = "Utilities for projects using https://github.com/ryanisaacg/quicksilver"
+version = "0.1.0"
+authors = ["John P Mayer Jr <john.p.mayer.jr@gmail.com>"]
+edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "Readme.md"
+repository = "https://github.com/johnpmayer/quicksilver-utils"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+specs = "0.15"
+specs-derive = "0.4.0"
+quicksilver = "=0.4.0-alpha0.2"
+send_wrapper = "0.4.0"
+
+[lib]
+name = "quicksilver_utils_ecs"
+path = "src/lib.rs"
+
+[dev-dependencies]
+platter = "0.1.4"
+log = "*"
+
+[[example]]
+name = "adventurer"
