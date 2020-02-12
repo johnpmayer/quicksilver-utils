@@ -7,7 +7,7 @@
 use log::{debug, info};
 use platter::load_file;
 use quicksilver::{
-    graphics::{Graphics, Image, PixelFormat},
+    graphics::{Graphics, Image},
     lifecycle::{run, EventStream, Settings, Window},
     Result,
 };
@@ -33,9 +33,15 @@ enum Animation {
     Faint,
 }
 
+// Number of milliseconds to display the frame
 fn frames() -> HashMap<Animation, Vec<u32>> {
     let mut dat = HashMap::new();
-    dat.insert(Animation::Idle, vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+    dat.insert(
+        Animation::Idle,
+        vec![
+            100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+        ],
+    );
     dat.insert(Animation::Run, vec![1, 1, 1, 1, 1, 1, 1, 1]);
     dat.insert(Animation::SlashUp, vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
     dat.insert(Animation::SlashDown, vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
@@ -60,36 +66,51 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
 
     let mut world = World::new();
 
-    world.insert(SharedRenderingContext {
+    world.insert(RenderContext {
         gfx: SendWrapper::new(gfx),
         window: SendWrapper::new(window),
     });
 
+    let now = instant::now();
+
+    world.insert(TimeContext { now });
+
     world.register::<Position>();
-    world.register::<Sprite>();
+    world.register::<SpriteConfig>();
     world.register::<PlayerInputFlag>();
 
     // Create the player
+    let player_sprite = SpriteConfig {
+        image: SendWrapper::new(sprite_image),
+        width: 32,
+        height: 32,
+        scale: 2.,
+        animation: Some(AnimationConfig {
+            loop_start_time: now,
+            frames: frames()
+                .get(&Animation::Idle)
+                .expect("frames for idle animation")
+                .clone(),
+        }),
+    };
+
     world
         .create_entity()
         .with(Position { x: 0., y: 0. })
-        .with(Sprite {
-            image: SendWrapper::new(sprite_image),
-        })
+        .with(player_sprite)
         .with(PlayerInputFlag)
         .build();
 
     debug!("Created world, components, and entities");
-
-    // let mut dispatcher = DispatcherBuilder::new()
-    //     .with(RenderSprites, "render_sprites", &[])
-    //     .build();
 
     let mut sprite_system = RenderSprites;
 
     debug!("Entering main loop");
 
     'main: loop {
+        let now: f64 = instant::now();
+        *world.write_resource::<TimeContext>() = TimeContext { now };
+
         info!("In the loop");
 
         while let Some(ev) = event_stream.next_event().await {
@@ -97,8 +118,6 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         }
 
         sprite_system.run_now(&world);
-
-        // dispatcher.dispatch_seq(&world) // otherwise SendWrapper will explode!
     }
 
     Ok(())

@@ -11,6 +11,9 @@ repository = "https://github.com/johnpmayer/quicksilver-utils"
 [package.metadata.docs.rs]
 all-features = true
 
+[features]
+stdweb = ["quicksilver/stdweb", "instant/stdweb"]
+
 [dependencies]
 specs = "0.15"
 specs-derive = "0.4.0"
@@ -24,6 +27,7 @@ path = "src/lib.rs"
 
 [dev-dependencies]
 platter = "0.1.4"
+instant = { version = "0.1.2", features = ["now"] }
 
 [[example]]
 name = "adventurer"
