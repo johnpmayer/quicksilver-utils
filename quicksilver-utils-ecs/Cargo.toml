@@ -19,7 +19,7 @@ specs = "0.15"
 specs-derive = "0.4.0"
 quicksilver = "=0.4.0-alpha0.2"
 send_wrapper = "0.4.0"
-log = "*"
+log = "0.4"
 
 [lib]
 name = "quicksilver_utils_ecs"
