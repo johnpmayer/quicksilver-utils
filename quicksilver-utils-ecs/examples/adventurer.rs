@@ -106,7 +106,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
 
     let mut sprite_system = RenderSprites;
     let mut move_system = WasdMovement {
-        eventCache: EventCache::new(),
+        event_cache: EventCache::new(),
     };
 
     debug!("Entering main loop");

@@ -115,7 +115,7 @@ pub struct EventBuffer {
 }
 
 pub struct WasdMovement {
-    pub eventCache: EventCache,
+    pub event_cache: EventCache,
 }
 
 impl<'a> System<'a> for WasdMovement {
@@ -136,22 +136,22 @@ impl<'a> System<'a> for WasdMovement {
         let mut velocity = [0., 0.];
 
         for event in eventbuffer.events.iter() {
-            self.eventCache.process_event(event)
+            self.event_cache.process_event(event)
         }
 
-        if self.eventCache.key(Key::W) {
+        if self.event_cache.key(Key::W) {
             velocity[1] = -speed;
         }
 
-        if self.eventCache.key(Key::A) {
+        if self.event_cache.key(Key::A) {
             velocity[0] = -speed;
         }
 
-        if self.eventCache.key(Key::S) {
+        if self.event_cache.key(Key::S) {
             velocity[1] = speed;
         }
 
-        if self.eventCache.key(Key::D) {
+        if self.event_cache.key(Key::D) {
             velocity[0] = speed;
         }
 
