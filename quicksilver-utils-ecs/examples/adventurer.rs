@@ -8,7 +8,7 @@ use log::{debug, info};
 use platter::load_file;
 use quicksilver::{
     graphics::{Graphics, Image},
-    lifecycle::{run, EventStream, Settings, Window},
+    lifecycle::{run, Event, EventCache, EventStream, Settings, Window},
     Result,
 };
 use quicksilver_utils_ecs::*;
@@ -74,6 +74,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     let now = instant::now();
 
     world.insert(TimeContext { now });
+    world.insert(EventBuffer { events: Vec::new() });
 
     world.register::<Position>();
     world.register::<SpriteConfig>();
@@ -104,6 +105,9 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     debug!("Created world, components, and entities");
 
     let mut sprite_system = RenderSprites;
+    let mut move_system = WasdMovement {
+        eventCache: EventCache::new(),
+    };
 
     debug!("Entering main loop");
 
@@ -113,11 +117,15 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
 
         info!("In the loop");
 
+        let mut buffer: Vec<Event> = Vec::new();
         while let Some(ev) = event_stream.next_event().await {
-            debug!("Quicksilver event: {:?}", ev)
+            debug!("Quicksilver event: {:?}", ev);
+            buffer.push(ev)
         }
+        (*world.write_resource::<EventBuffer>()).events = buffer;
 
         sprite_system.run_now(&world);
+        move_system.run_now(&world);
     }
 
     Ok(())

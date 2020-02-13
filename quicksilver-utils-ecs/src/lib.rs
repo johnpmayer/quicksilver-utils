@@ -9,7 +9,7 @@ use log::debug;
 use quicksilver::{
     geom::Rectangle,
     graphics::{Color, Graphics, Image},
-    lifecycle::{Event, Window},
+    lifecycle::{Event, EventCache, Key, Window},
 };
 use send_wrapper::SendWrapper;
 use specs::{prelude::*, Component, System, Write};
@@ -95,11 +95,8 @@ impl<'a> System<'a> for RenderSprites {
             };
             let sprite_offset = sprite_offset * sprite.width;
             let sprite_position = Rectangle::new((sprite_offset, 0), (sprite.width, sprite.height));
-            let location_size = 64.; // FIXME: use scale
-            let location = Rectangle::new(
-                (position.x, position.y),
-                (position.x + location_size, position.y + location_size),
-            );
+            let location_size = sprite.width as f32 * sprite.scale;
+            let location = Rectangle::new((position.x, position.y), (location_size, location_size));
             debug!(
                 "Drawing dude from sprite {:?} at {:?}",
                 sprite_position, location
@@ -114,10 +111,12 @@ impl<'a> System<'a> for RenderSprites {
 // Could replace this with specific events
 #[derive(Default)]
 pub struct EventBuffer {
-    events: Vec<Event>,
+    pub events: Vec<Event>,
 }
 
-pub struct WasdMovement;
+pub struct WasdMovement {
+    pub eventCache: EventCache,
+}
 
 impl<'a> System<'a> for WasdMovement {
     type SystemData = (
@@ -128,12 +127,38 @@ impl<'a> System<'a> for WasdMovement {
 
     fn run(
         &mut self,
-        (events_resource, player_input_flag_storage, mut position_storage): Self::SystemData,
+        (eventbuffer_resource, player_input_flag_storage, mut position_storage): Self::SystemData,
     ) {
-        let events: &EventBuffer = &events_resource;
+        debug!("Running WasdMovement");
+        let eventbuffer: &EventBuffer = &eventbuffer_resource;
+
+        let speed = 1.; // configurable per entity, and should also take into account tick delta
+        let mut velocity = [0., 0.];
+
+        for event in eventbuffer.events.iter() {
+            self.eventCache.process_event(event)
+        }
+
+        if self.eventCache.key(Key::W) {
+            velocity[1] = -speed;
+        }
+
+        if self.eventCache.key(Key::A) {
+            velocity[0] = -speed;
+        }
+
+        if self.eventCache.key(Key::S) {
+            velocity[1] = speed;
+        }
+
+        if self.eventCache.key(Key::D) {
+            velocity[0] = speed;
+        }
+
         debug!("Running WasdMovement");
         for (_flag, position) in (&player_input_flag_storage, &mut position_storage).join() {
-            // Should only be one...
+            position.x += velocity[0];
+            position.y += velocity[1];
         }
     }
 }
