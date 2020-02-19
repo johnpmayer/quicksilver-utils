@@ -16,11 +16,6 @@ use send_wrapper::SendWrapper;
 use specs::prelude::*;
 use std::collections::HashMap;
 
-enum Orientation {
-    Left,
-    Right,
-}
-
 #[derive(Eq, Hash, PartialEq)]
 enum Animation {
     Idle,
@@ -127,6 +122,4 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         sprite_system.run_now(&world);
         move_system.run_now(&world);
     }
-
-    Ok(())
 }
