@@ -1,0 +1,3 @@
+[submodule "quicksilver-utils-ecs/monk-deploy"]
+	path = quicksilver-utils-ecs/monk-deploy
+	url = git@github.com:johnpmayer/monk.git
