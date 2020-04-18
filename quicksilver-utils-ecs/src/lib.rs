@@ -132,7 +132,7 @@ impl<'a> System<'a> for WasdMovement {
         debug!("Running WasdMovement");
         let eventbuffer: &EventBuffer = &eventbuffer_resource;
 
-        let speed = 1.; // configurable per entity, and should also take into account tick delta
+        let speed = 3.; // configurable per entity, and should also take into account tick delta
         let mut velocity = [0., 0.];
 
         for event in eventbuffer.events.iter() {
