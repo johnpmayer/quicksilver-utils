@@ -1,10 +1,10 @@
 
 use specs::prelude::*;
 use log::trace;
-use crate::global::Global;
+use super::global::Global;
 use quicksilver::{geom::Rectangle};
 
-use quicksilver_utils_ecs::*;
+use crate::*;
 
 pub struct BackgroundRender;
 

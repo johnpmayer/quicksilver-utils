@@ -1,6 +1,6 @@
 
 use specs::{prelude::*, Component, System, Write};
-use quicksilver_utils_ecs::*;
+use crate::*;
 use super::global::Global;
 use log::{info, trace};
 use quicksilver::lifecycle::{Key, EventCache};

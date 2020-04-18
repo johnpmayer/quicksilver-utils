@@ -2,9 +2,9 @@
 use specs::prelude::*;
 use quicksilver::{geom::Vector, graphics::Color};
 use log::trace;
-use crate::global::Global;
+use super::global::Global;
 
-use quicksilver_utils_ecs::*;
+use crate::*;
 
 pub struct HudRender;
 

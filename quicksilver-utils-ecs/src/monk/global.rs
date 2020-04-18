@@ -1,6 +1,6 @@
 
 use specs::prelude::*;
-use crate::interact::Objects;
+use super::interact::Objects;
 use quicksilver::graphics::{Image, FontRenderer};
 use send_wrapper::SendWrapper;
 

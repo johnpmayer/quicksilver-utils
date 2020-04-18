@@ -15,17 +15,12 @@ use send_wrapper::SendWrapper;
 use specs::prelude::*;
 use std::collections::HashMap;
 
-mod background;
-mod global;
-mod hud;
-mod interact;
-mod room;
-
-use background::BackgroundRender;
-use room::Room;
-use global::Global;
-use interact::*;
-use hud::HudRender;
+use quicksilver_utils_ecs::monk::{
+ background::BackgroundRender,
+ room::Room,
+ global::Global,
+ interact::*,
+ hud::HudRender};
 
 #[derive(Eq, Hash, PartialEq)]
 enum Animation {

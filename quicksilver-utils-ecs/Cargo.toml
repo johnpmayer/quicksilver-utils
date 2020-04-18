@@ -20,14 +20,16 @@ specs-derive = "0.4.0"
 quicksilver = "=0.4.0-alpha0.3"
 send_wrapper = "0.4.0"
 log = "0.4"
+platter = "0.1.4"
+instant = { version = "0.1.2", features = ["now"] }
 
 [lib]
 name = "quicksilver_utils_ecs"
 path = "src/lib.rs"
 
-[dev-dependencies]
-platter = "0.1.4"
-instant = { version = "0.1.2", features = ["now"] }
+[[bin]]
+name = "monk"
+path = "bin/monk.rs"
 
 [[example]]
 name = "adventurer"
