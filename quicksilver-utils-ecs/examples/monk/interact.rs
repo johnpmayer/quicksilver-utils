@@ -2,7 +2,8 @@
 use specs::{prelude::*, Component, System, Write};
 use quicksilver_utils_ecs::*;
 use super::global::Global;
-use log::debug;
+use log::{info, trace};
+use quicksilver::lifecycle::{Key, EventCache};
 
 #[derive(Component)]
 pub struct PlayerInteract {
@@ -12,13 +13,15 @@ pub struct PlayerInteract {
 
 #[derive(Clone, Copy, Debug)]
 pub enum Objects {
-    Bed
+    Bed,
+    BedroomExit,
 }
 
 impl Objects {
     pub fn label(&self) -> &'static str {
         match self {
-            Objects::Bed => "bed"
+            Objects::Bed => "bed",
+            Objects::BedroomExit => "door",
         }
     }
 }
@@ -30,7 +33,9 @@ pub struct ObjectInteract {
     pub height: f32,
 }
 
-pub struct DetectInteractionRange;
+pub struct InteractionSystem {
+    pub event_cache: EventCache,
+}
 
 struct BoundingBox<'a> {
     pub position: &'a Position,
@@ -46,19 +51,20 @@ fn overlaps(a: &BoundingBox, b: &BoundingBox) -> bool {
     !(out_left || out_right || out_up || out_down)
 }
 
-impl<'a> System<'a> for DetectInteractionRange {
+impl<'a> System<'a> for InteractionSystem {
     type SystemData = (
         Write<'a, Global>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, PlayerInteract>,
         ReadStorage<'a, ObjectInteract>,
+        Read<'a, EventBuffer>,
     );
 
     fn run(
         &mut self,
-        (mut global, position_storage, player_interact_storage, object_interact_storage,): Self::SystemData,
+        (mut global, position_storage, player_interact_storage, object_interact_storage, event_buffer): Self::SystemData,
     ) {
-        let player: Entity = global.player.expect("player entity is unset");
+        let player: Entity = global.player;
         let player_position: &Position = position_storage.get(player).expect("player entity has no position");
         let player_interact: &PlayerInteract = player_interact_storage.get(player).expect("player entity has no player interact");
         let player_bounding_box = BoundingBox {
@@ -81,7 +87,15 @@ impl<'a> System<'a> for DetectInteractionRange {
         }
 
         if let Some(focus) = global.focus {
-            debug!("We have a focus: {:?}", focus)
+            trace!("We have a focus: {:?}", focus);
+
+            for event in event_buffer.events.iter() {
+                self.event_cache.process_event(event)
+            }
+
+            if self.event_cache.key(Key::E) {
+                info!("Interact with {:?}!", focus);
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 
-use log::debug;
+use log::trace;
 use quicksilver::{
     geom::Rectangle,
     graphics::{Color, Graphics, Image},
@@ -67,14 +67,15 @@ impl<'a> System<'a> for RenderSprites {
         Read<'a, TimeContext>,
         Write<'a, RenderContext>,
     );
+
     fn run(
         &mut self,
         (position_storage, sprite_storage, time_ctx_resource, mut render_ctx_resource): Self::SystemData,
     ) {
         let time_ctx: &TimeContext = &time_ctx_resource;
         let ctx: &mut RenderContext = &mut render_ctx_resource;
-        ctx.gfx.clear(Color::WHITE);
-        debug!("Running RenderSprites");
+        // ctx.gfx.clear(Color::from_rgba(200,200,200,1.));
+        trace!("Running RenderSprites");
         for (position, sprite) in (&position_storage, &sprite_storage).join() {
             let sprite_offset: u32 = if let Some(animation) = &sprite.animation {
                 let sprite_loop_elapsed = (time_ctx.now - animation.loop_start_time) as u32;
@@ -97,14 +98,14 @@ impl<'a> System<'a> for RenderSprites {
             let sprite_position = Rectangle::new((sprite_offset, 0), (sprite.width, sprite.height));
             let location_size = sprite.width as f32 * sprite.scale;
             let location = Rectangle::new((position.x, position.y), (location_size, location_size));
-            debug!(
+            trace!(
                 "Drawing dude from sprite {:?} at {:?}",
                 sprite_position, location
             );
             ctx.gfx
                 .draw_subimage(&sprite.image, sprite_position, location);
         }
-        ctx.gfx.present(&ctx.window).expect("present"); // FIXME probably a separate system?
+        // ctx.gfx.present(&ctx.window).expect("present"); // FIXME probably a separate system?
     }
 }
 
@@ -129,7 +130,7 @@ impl<'a> System<'a> for WasdMovement {
         &mut self,
         (eventbuffer_resource, player_input_flag_storage, mut position_storage): Self::SystemData,
     ) {
-        debug!("Running WasdMovement");
+        trace!("Running WasdMovement");
         let eventbuffer: &EventBuffer = &eventbuffer_resource;
 
         let speed = 3.; // configurable per entity, and should also take into account tick delta
@@ -155,7 +156,6 @@ impl<'a> System<'a> for WasdMovement {
             velocity[0] = speed;
         }
 
-        debug!("Running WasdMovement");
         for (_flag, position) in (&player_input_flag_storage, &mut position_storage).join() {
             position.x += velocity[0];
             position.y += velocity[1];
