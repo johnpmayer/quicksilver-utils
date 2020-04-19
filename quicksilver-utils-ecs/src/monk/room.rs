@@ -164,6 +164,24 @@ impl RoomSystem {
                             .build();
                     }
 
+                    if progress.baking_bread {
+                        let artisan_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 3,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 350., y: 375.})
+                            .with(artisan_sprite)
+                            .with(ObjectInteract{object: Objects::TalkArtisan, width: 64., height: 64.})
+                            .build();
+                    }
+
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.hall_background.clone()))
@@ -253,6 +271,24 @@ impl RoomSystem {
                             .with(Position{x: 600., y: 350.})
                             .with(gardener_sprite)
                             .with(ObjectInteract{object: Objects::TalkGardener, width: 64., height: 64.})
+                            .build();
+                    }
+
+                    if !progress.charity_inspiration {
+                        let beggar_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 4,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 50., y: 500.})
+                            .with(beggar_sprite)
+                            .with(ObjectInteract{object: Objects::TalkBeggar, width: 64., height: 64.})
                             .build();
                     }
 

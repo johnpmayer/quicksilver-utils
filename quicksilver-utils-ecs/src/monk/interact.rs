@@ -21,6 +21,8 @@ pub enum Objects {
     EnterGarden,
     TalkGardener,
     TalkBaker,
+    TalkBeggar,
+    TalkArtisan,
 }
 
 impl Objects {
@@ -33,6 +35,8 @@ impl Objects {
             Objects::EnterGarden => "enter the garden",
             Objects::TalkGardener => "speak with the gardener",
             Objects::TalkBaker => "speak with the baker",
+            Objects::TalkBeggar => "speak with the beggar",
+            Objects::TalkArtisan => "speak with the artisan",
         }
     }
 }
@@ -144,8 +148,11 @@ impl<'a> System<'a> for InteractionSystem {
                         }
 
                         if focus == Objects::Bed {
+
                             global.dialog = Some(Dialog::SleepConfirm)
+
                         } else if focus == Objects::TalkGardener {
+
                             if !global.progress.delegated_wheat {
                                 global.dialog = Some(Dialog::DelegateWheat)
                             } else if !global.progress.growing_wheat {
@@ -153,7 +160,9 @@ impl<'a> System<'a> for InteractionSystem {
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
+
                         } else if focus == Objects::TalkBaker {
+
                             if !global.progress.growing_wheat {
                                 global.dialog = Some(Dialog::NoWheatToBake)
                             } else if !global.progress.delegated_baking {
@@ -163,6 +172,29 @@ impl<'a> System<'a> for InteractionSystem {
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
+
+                        } else if focus == Objects::TalkBeggar {
+
+                            if !global.progress.baking_bread {
+                                global.dialog = Some(Dialog::NoBreadToGive)
+                            } else if !global.progress.gave_to_charity {
+                                global.dialog = Some(Dialog::GiveBread)
+                            } else {
+                                global.dialog = Some(Dialog::ThanksForBread)
+                            }
+
+                        } else if focus == Objects::TalkArtisan {
+
+                            if !global.progress.charity_inspiration {
+                                global.dialog = Some(Dialog::Uninspired)
+                            } else if !global.progress.delegated_papermaking {
+                                global.dialog = Some(Dialog::DelegatePaper)
+                            } else if !global.progress.making_paper {
+                                global.dialog = Some(Dialog::PendingDelegatePaper)
+                            } else {
+                                global.dialog = Some(Dialog::Greet)
+                            }
+
                         }
 
                         self.last_interaction = Some(now)

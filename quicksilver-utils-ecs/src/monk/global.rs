@@ -8,12 +8,15 @@ use send_wrapper::SendWrapper;
 pub struct GameProgression {
     pub delegated_wheat: bool,
     pub growing_wheat: bool,
+
     pub delegated_baking: bool,
     pub baking_bread: bool,
+
     pub gave_to_charity: bool,
-    pub artisan_inspired: bool,
+    pub charity_inspiration: bool,
+
     pub delegated_papermaking: bool,
-    pub making_papers: bool,
+    pub making_paper: bool,
     // TODO
 }
 

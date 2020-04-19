@@ -6,13 +6,19 @@ use quicksilver::{geom::Rectangle, graphics::Color};
 
 #[derive(Clone, Copy)]
 pub enum Dialog {
-    Greet,
+    Greet, // Eventually write custom greetings for each monk... they should suggest who to write to
     SleepConfirm,
     DelegateWheat,
     PendingDelegateWheat,
     NoWheatToBake,
     DelegateBake,
     PendingDelegateBake,
+    NoBreadToGive,
+    GiveBread,
+    ThanksForBread,
+    Uninspired,
+    DelegatePaper,
+    PendingDelegatePaper,
 }
 
 impl Dialog {
@@ -25,6 +31,12 @@ impl Dialog {
             Dialog::NoWheatToBake => "Hello Brother! We have nothing to bake...\n(Enter)",
             Dialog::DelegateBake => "Hello Borther! Shall I begin baking bread?\n(Y,N)",
             Dialog::PendingDelegateBake => "I'll start baking tomorrow!\n(Enter)",
+            Dialog::NoBreadToGive => "So hungry...\n(Enter)",
+            Dialog::GiveBread => "Mmmh, I smell fresh bread! May I have some?\n(Y/N)",
+            Dialog::ThanksForBread => "Mmmh, delicious!\n(Enter)",
+            Dialog::Uninspired => "It's peaceful here, but what is there to do?\n(Enter)",
+            Dialog::DelegatePaper => "We must contact other monestaries! Shall I begin making paper?\n(Y/N)",
+            Dialog::PendingDelegatePaper => "I'll start making paper tomorrow!\n(Enter)",
         }
     }
 
@@ -38,9 +50,19 @@ impl Dialog {
                     if global.progress.delegated_wheat {
                         global.progress.growing_wheat = true
                     }
+                    
                     if global.progress.delegated_baking {
                         global.progress.baking_bread = true
                     }
+
+                    if global.progress.gave_to_charity {
+                        global.progress.charity_inspiration = true
+                    }
+
+                    if global.progress.delegated_papermaking {
+                        global.progress.making_paper = true
+                    }
+
                     should_close = true
                 } else if event_cache.key(Key::N) {
                     should_close = true
@@ -57,6 +79,22 @@ impl Dialog {
             Dialog::DelegateBake => {
                 if event_cache.key(Key::Y) {
                     global.progress.delegated_baking = true;
+                    should_close = true
+                } else if event_cache.key(Key::N) {
+                    should_close = true
+                }
+            }
+            Dialog::GiveBread => {
+                if event_cache.key(Key::Y) {
+                    global.progress.gave_to_charity = true;
+                    should_close = true
+                } else if event_cache.key(Key::N) {
+                    should_close = true
+                }
+            }
+            Dialog::DelegatePaper => {
+                if event_cache.key(Key::Y) {
+                    global.progress.delegated_papermaking = true;
                     should_close = true
                 } else if event_cache.key(Key::N) {
                     should_close = true
