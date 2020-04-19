@@ -78,6 +78,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     // Create the player
     let player_sprite = SpriteConfig {
         image: SendWrapper::new(sprite_image),
+        row: 0,
         width: 32,
         height: 32,
         scale: 2.,

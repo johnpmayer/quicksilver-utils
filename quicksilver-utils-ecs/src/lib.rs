@@ -30,6 +30,7 @@ pub struct AnimationConfig {
 #[derive(Component)]
 pub struct SpriteConfig {
     pub image: SendWrapper<Image>, // quicksilver graphics uses Rc
+    pub row: u32,
     pub width: u32,
     pub height: u32,
     pub scale: f32,
@@ -97,7 +98,8 @@ impl<'a> System<'a> for RenderSprites {
                 0
             };
             let sprite_offset = sprite_offset * sprite.width;
-            let sprite_position = Rectangle::new((sprite_offset, 0), (sprite.width, sprite.height));
+            let sprite_row = sprite.row * sprite.height;
+            let sprite_position = Rectangle::new((sprite_offset, sprite_row), (sprite.width, sprite.height));
             let location_size = sprite.width as f32 * sprite.scale;
             let location = Rectangle::new((position.x, position.y), (location_size, location_size));
             trace!(

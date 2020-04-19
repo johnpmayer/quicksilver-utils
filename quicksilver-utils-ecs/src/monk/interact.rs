@@ -19,6 +19,8 @@ pub enum Objects {
     EnterBedroom,
     EnterCellar,
     EnterGarden,
+    TalkGardener,
+    TalkBaker,
 }
 
 impl Objects {
@@ -29,6 +31,8 @@ impl Objects {
             Objects::EnterBedroom => "enter the bedroom",
             Objects::EnterCellar => "enter the cellar",
             Objects::EnterGarden => "enter the garden",
+            Objects::TalkGardener => "speak with the gardener",
+            Objects::TalkBaker => "speak with the baker",
         }
     }
 }
@@ -141,6 +145,24 @@ impl<'a> System<'a> for InteractionSystem {
 
                         if focus == Objects::Bed {
                             global.dialog = Some(Dialog::SleepConfirm)
+                        } else if focus == Objects::TalkGardener {
+                            if !global.progress.delegated_wheat {
+                                global.dialog = Some(Dialog::DelegateWheat)
+                            } else if !global.progress.growing_wheat {
+                                global.dialog = Some(Dialog::PendingDelegateWheat)
+                            } else {
+                                global.dialog = Some(Dialog::Greet)
+                            }
+                        } else if focus == Objects::TalkBaker {
+                            if !global.progress.growing_wheat {
+                                global.dialog = Some(Dialog::NoWheatToBake)
+                            } else if !global.progress.delegated_baking {
+                                global.dialog = Some(Dialog::DelegateBake)
+                            } else if !global.progress.baking_bread {
+                                global.dialog = Some(Dialog::PendingDelegateBake)
+                            } else {
+                                global.dialog = Some(Dialog::Greet)
+                            }
                         }
 
                         self.last_interaction = Some(now)

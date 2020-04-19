@@ -14,7 +14,7 @@ pub enum Room {
 }
 
 pub struct RoomData {
-    pub player_sprite: Image,
+    pub characters_spritesheet: Image,
     pub bedroom_background: Image,
     pub bedroom_bed_sprite: Image,
     pub hall_background: Image,
@@ -43,10 +43,13 @@ impl RoomSystem {
             }
             world.maintain();
 
+            let progress = world.fetch::<Global>().progress;
+
             match room {
                 Room::Bedroom => {
                     let player_sprite = SpriteConfig {
-                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                        row: 0,
                         width: 32,
                         height: 32,
                         scale: 2.,
@@ -63,6 +66,7 @@ impl RoomSystem {
                         
                     let bed_sprite = SpriteConfig {
                         image: SendWrapper::new(self.room_data.bedroom_bed_sprite.clone()),
+                        row: 0,
                         width: 32,
                         height: 32,
                         scale: 3.,
@@ -88,7 +92,8 @@ impl RoomSystem {
                 }
                 Room::Hall => {
                     let player_sprite = SpriteConfig {
-                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                        row: 0,
                         width: 32,
                         height: 32,
                         scale: 2.,
@@ -123,13 +128,50 @@ impl RoomSystem {
                         .with(ObjectInteract{object: Objects::EnterGarden, width: 100., height: 230.})
                         .build();
 
+                    if !progress.growing_wheat {
+                        let gardener_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 2,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 200., y: 450.})
+                            .with(gardener_sprite)
+                            .with(ObjectInteract{object: Objects::TalkGardener, width: 64., height: 64.})
+                            .build();
+                    }
+
+                    if !progress.baking_bread {
+                        let baker_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 1,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 550., y: 450.})
+                            .with(baker_sprite)
+                            .with(ObjectInteract{object: Objects::TalkBaker, width: 64., height: 64.})
+                            .build();
+                    }
+
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.hall_background.clone()))
                 }
                 Room::Cellar => {
                     let player_sprite = SpriteConfig {
-                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                        row: 0,
                         width: 32,
                         height: 32,
                         scale: 2.,
@@ -150,13 +192,32 @@ impl RoomSystem {
                         .with(ObjectInteract{object: Objects::EnterHall, width: 100., height: 250.})
                         .build();
 
+                    if progress.baking_bread {
+                        let baker_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 1,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 300., y: 450.})
+                            .with(baker_sprite)
+                            .with(ObjectInteract{object: Objects::TalkBaker, width: 64., height: 64.})
+                            .build();
+                    }
+                    
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.cellar_background.clone()))
                 }
                 Room::Garden => {
                     let player_sprite = SpriteConfig {
-                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                        row: 0,
                         width: 32,
                         height: 32,
                         scale: 2.,
@@ -176,6 +237,24 @@ impl RoomSystem {
                         .with(Position{x: 400., y: 200.})
                         .with(ObjectInteract{object: Objects::EnterHall, width: 50., height: 120.})
                         .build();
+
+                    if progress.growing_wheat {
+                        let gardener_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 2,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 600., y: 350.})
+                            .with(gardener_sprite)
+                            .with(ObjectInteract{object: Objects::TalkGardener, width: 64., height: 64.})
+                            .build();
+                    }
 
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);

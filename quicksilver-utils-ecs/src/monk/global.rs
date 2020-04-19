@@ -4,6 +4,19 @@ use super::{interact::Objects, room::Room, dialog::Dialog};
 use quicksilver::graphics::{Image, FontRenderer};
 use send_wrapper::SendWrapper;
 
+#[derive(Default, Clone, Copy)]
+pub struct GameProgression {
+    pub delegated_wheat: bool,
+    pub growing_wheat: bool,
+    pub delegated_baking: bool,
+    pub baking_bread: bool,
+    pub gave_to_charity: bool,
+    pub artisan_inspired: bool,
+    pub delegated_papermaking: bool,
+    pub making_papers: bool,
+    // TODO
+}
+
 // Single threaded for now, don't both splitting into multiple. Each system can take this as mutable...
 pub struct Global {
     pub player: Option<Entity>,
@@ -12,6 +25,7 @@ pub struct Global {
     pub background: Option<SendWrapper<Image>>,
     pub pending_room: Option<Room>,
     pub dialog: Option<Dialog>,
+    pub progress: GameProgression
 }
 
 impl Default for Global {
@@ -28,6 +42,7 @@ impl Global {
         let background = None;
         let pending_room = Some(initial_room);
         let dialog = None;
-        Global{player, focus, font, background, pending_room, dialog}
+        let progress = GameProgression::default();
+        Global{player, focus, font, background, pending_room, dialog, progress}
     }
 }

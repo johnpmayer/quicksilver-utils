@@ -27,8 +27,8 @@ fn main() {
 }
 
 async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Result<()> {
-    let monk_data = load_file("monk.png").await?;
-    let monk_image: Image = Image::from_encoded_bytes(&gfx, &monk_data)?;
+    let characters_data = load_file("monk_characters.png").await?;
+    let characters_image: Image = Image::from_encoded_bytes(&gfx, &characters_data)?;
 
     let bed_data = load_file("bed.png").await?;
     let bed_image: Image = Image::from_encoded_bytes(&gfx, &bed_data)?;
@@ -51,7 +51,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     let garden_image: Image = Image::from_encoded_bytes(&gfx, &garden_data)?;
 
     let room_data = RoomData {
-        player_sprite: monk_image,
+        characters_spritesheet: characters_image,
         bedroom_background: bedroom_image,
         bedroom_bed_sprite: bed_image,
         hall_background: hall_image,
