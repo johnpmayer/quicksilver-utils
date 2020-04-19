@@ -9,7 +9,8 @@ use quicksilver::graphics::Image;
 pub enum Room {
     Bedroom,
     Hall,
-    Cellar
+    Cellar,
+    Garden,
 }
 
 pub struct RoomData {
@@ -18,6 +19,7 @@ pub struct RoomData {
     pub bedroom_bed_sprite: Image,
     pub hall_background: Image,
     pub cellar_background: Image,
+    pub garden_background: Image,
 }
 
 pub struct RoomSystem {
@@ -115,6 +117,12 @@ impl RoomSystem {
                         .with(ObjectInteract{object: Objects::EnterCellar, width: 100., height: 200.})
                         .build();
 
+                    world
+                        .create_entity()
+                        .with(Position{x: 50., y: 250.})
+                        .with(ObjectInteract{object: Objects::EnterGarden, width: 100., height: 230.})
+                        .build();
+
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.hall_background.clone()))
@@ -145,6 +153,33 @@ impl RoomSystem {
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.cellar_background.clone()))
+                }
+                Room::Garden => {
+                    let player_sprite = SpriteConfig {
+                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        width: 32,
+                        height: 32,
+                        scale: 2.,
+                        animation: None,
+                    };
+
+                    let player_entity = world
+                        .create_entity()
+                        .with(Position { x: 400., y: 280. })
+                        .with(player_sprite)
+                        .with(PlayerInputFlag)
+                        .with(PlayerInteract { width: 64., height: 64.})
+                        .build();
+                    
+                        world
+                        .create_entity()
+                        .with(Position{x: 400., y: 200.})
+                        .with(ObjectInteract{object: Objects::EnterHall, width: 50., height: 120.})
+                        .build();
+
+                    let mut global = world.get_mut::<Global>().expect("global resource");
+                    global.player = Some(player_entity);
+                    global.background = Some(SendWrapper::new(self.room_data.garden_background.clone()))
                 }
             }
 

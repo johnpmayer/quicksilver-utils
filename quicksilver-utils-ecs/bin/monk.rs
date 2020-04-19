@@ -45,12 +45,16 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     let cellar_data = load_file("cellar.png").await?;
     let cellar_image: Image = Image::from_encoded_bytes(&gfx, &cellar_data)?;
 
+    let garden_data = load_file("garden.png").await?;
+    let garden_image: Image = Image::from_encoded_bytes(&gfx, &garden_data)?;
+
     let room_data = RoomData {
         player_sprite: monk_image,
         bedroom_background: bedroom_image,
         bedroom_bed_sprite: bed_image,
         hall_background: hall_image,
         cellar_background: cellar_image,
+        garden_background: garden_image,
     };
 
     debug!("Loaded resources");

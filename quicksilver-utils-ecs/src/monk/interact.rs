@@ -18,6 +18,7 @@ pub enum Objects {
     EnterHall,
     EnterBedroom,
     EnterCellar,
+    EnterGarden,
 }
 
 impl Objects {
@@ -27,6 +28,7 @@ impl Objects {
             Objects::EnterHall => "enter the hall",
             Objects::EnterBedroom => "enter the bedroom",
             Objects::EnterCellar => "enter the cellar",
+            Objects::EnterGarden => "enter the garden",
         }
     }
 }
@@ -127,6 +129,8 @@ impl<'a> System<'a> for InteractionSystem {
                         global.pending_room = Some(Room::Bedroom)
                     } else if focus == Objects::EnterCellar {
                         global.pending_room = Some(Room::Cellar)
+                    } else if focus == Objects::EnterGarden {
+                        global.pending_room = Some(Room::Garden)
                     }
 
                     self.last_interaction = Some(now)
