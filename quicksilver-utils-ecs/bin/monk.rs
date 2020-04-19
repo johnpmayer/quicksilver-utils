@@ -13,10 +13,12 @@ use specs::prelude::*;
 
 use quicksilver_utils_ecs::monk::{
  background::BackgroundRender,
+ dialog::*,
  global::Global,
  room::*,
  interact::*,
- hud::HudRender};
+ hud::HudRender
+};
 
 fn main() {
     let mut settings = Settings::default();
@@ -88,6 +90,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     };
     let mut interaction_system = InteractionSystem::new();
     let mut hud_render_system = HudRender; // we could inject the font here instead of the Global resource...
+    let mut dialog_render_system = DialogRender;
     let mut background_render_system = BackgroundRender;
     let room_system = RoomSystem{room_data: SendWrapper::new(room_data)};
 
@@ -116,6 +119,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         background_render_system.run_now(&world);
         sprite_system.run_now(&world);
         hud_render_system.run_now(&world);
+        dialog_render_system.run_now(&world);
 
         let ctx = world.get_mut::<RenderContext>().expect("has render context");
         ctx.gfx.present(&ctx.window).expect("present");

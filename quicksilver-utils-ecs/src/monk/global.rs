@@ -1,6 +1,6 @@
 
 use specs::prelude::*;
-use super::{interact::Objects, room::Room};
+use super::{interact::Objects, room::Room, dialog::Dialog};
 use quicksilver::graphics::{Image, FontRenderer};
 use send_wrapper::SendWrapper;
 
@@ -10,7 +10,8 @@ pub struct Global {
     pub focus: Option<Objects>,
     pub font: SendWrapper<FontRenderer>,
     pub background: Option<SendWrapper<Image>>,
-    pub pending_room: Option<Room>
+    pub pending_room: Option<Room>,
+    pub dialog: Option<Dialog>,
 }
 
 impl Default for Global {
@@ -26,6 +27,7 @@ impl Global {
         let font = SendWrapper::new(font);
         let background = None;
         let pending_room = Some(initial_room);
-        Global{player, focus, font, background, pending_room}
+        let dialog = None;
+        Global{player, focus, font, background, pending_room, dialog}
     }
 }

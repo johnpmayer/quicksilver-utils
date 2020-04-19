@@ -1,7 +1,7 @@
 
 use specs::{prelude::*, Component, System, Write};
 use crate::*;
-use super::{global::Global, room::Room};
+use super::{global::Global, room::Room, dialog::Dialog};
 use log::{info, trace};
 use quicksilver::lifecycle::{Key, EventCache};
 use instant::Instant;
@@ -81,6 +81,10 @@ impl<'a> System<'a> for InteractionSystem {
         &mut self,
         (mut global, position_storage, player_interact_storage, object_interact_storage, event_buffer): Self::SystemData,
     ) {
+        for event in event_buffer.events.iter() {
+            self.event_cache.process_event(event)
+        }
+        
         let player: Entity = global.player.expect("player entity");
         let player_position: &Position = position_storage.get(player).expect("player entity has no position");
         let player_interact: &PlayerInteract = player_interact_storage.get(player).expect("player entity has no player interact");
@@ -103,37 +107,44 @@ impl<'a> System<'a> for InteractionSystem {
             }
         }
 
-        if let Some(focus) = global.focus {
-            trace!("We have a focus: {:?}", focus);
-
-            for event in event_buffer.events.iter() {
-                self.event_cache.process_event(event)
+        if let Some(dialog) = global.dialog {
+            let should_close = dialog.process(&mut global, &self.event_cache);
+            if should_close {
+                global.dialog = None
             }
+        } else {
+            if let Some(focus) = global.focus {
+                trace!("We have a focus: {:?}", focus);
 
-            if self.event_cache.key(Key::E) {
-                let now = Instant::now();
+                if self.event_cache.key(Key::E) {
+                    let now = Instant::now();
 
-                // Debounce!
-                let should_interact = if let Some(last_interaction) = self.last_interaction {
-                    now.duration_since(last_interaction).as_millis() > 500
-                } else {
-                    true
-                };
+                    // Debounce!
+                    let should_interact = if let Some(last_interaction) = self.last_interaction {
+                        now.duration_since(last_interaction).as_millis() > 500
+                    } else {
+                        true
+                    };
 
-                if should_interact {
-                    info!("Interact with {:?}!", focus);
+                    if should_interact {
+                        info!("Interact with {:?}!", focus);
 
-                    if focus == Objects::EnterHall {
-                        global.pending_room = Some(Room::Hall)
-                    } else if focus == Objects::EnterBedroom {
-                        global.pending_room = Some(Room::Bedroom)
-                    } else if focus == Objects::EnterCellar {
-                        global.pending_room = Some(Room::Cellar)
-                    } else if focus == Objects::EnterGarden {
-                        global.pending_room = Some(Room::Garden)
+                        if focus == Objects::EnterHall {
+                            global.pending_room = Some(Room::Hall)
+                        } else if focus == Objects::EnterBedroom {
+                            global.pending_room = Some(Room::Bedroom)
+                        } else if focus == Objects::EnterCellar {
+                            global.pending_room = Some(Room::Cellar)
+                        } else if focus == Objects::EnterGarden {
+                            global.pending_room = Some(Room::Garden)
+                        }
+
+                        if focus == Objects::Bed {
+                            global.dialog = Some(Dialog::SleepConfirm)
+                        }
+
+                        self.last_interaction = Some(now)
                     }
-
-                    self.last_interaction = Some(now)
                 }
             }
         }
