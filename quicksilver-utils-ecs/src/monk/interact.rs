@@ -1,9 +1,10 @@
 
 use specs::{prelude::*, Component, System, Write};
 use crate::*;
-use super::global::Global;
+use super::{global::Global, room::Room};
 use log::{info, trace};
 use quicksilver::lifecycle::{Key, EventCache};
+use instant::Instant;
 
 #[derive(Component)]
 pub struct PlayerInteract {
@@ -11,17 +12,19 @@ pub struct PlayerInteract {
     pub height: f32,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Objects {
     Bed,
-    BedroomExit,
+    EnterHall,
+    EnterBedroom
 }
 
 impl Objects {
     pub fn label(&self) -> &'static str {
         match self {
-            Objects::Bed => "bed",
-            Objects::BedroomExit => "door",
+            Objects::Bed => "go to sleep",
+            Objects::EnterHall => "enter the hall",
+            Objects::EnterBedroom => "enter the bedroom",
         }
     }
 }
@@ -34,7 +37,17 @@ pub struct ObjectInteract {
 }
 
 pub struct InteractionSystem {
-    pub event_cache: EventCache,
+    event_cache: EventCache,
+    last_interaction: Option<Instant>,
+}
+
+impl InteractionSystem {
+    pub fn new() -> Self {
+        InteractionSystem { 
+            event_cache: EventCache::new(),
+            last_interaction: None,
+        }
+    }
 }
 
 struct BoundingBox<'a> {
@@ -64,7 +77,7 @@ impl<'a> System<'a> for InteractionSystem {
         &mut self,
         (mut global, position_storage, player_interact_storage, object_interact_storage, event_buffer): Self::SystemData,
     ) {
-        let player: Entity = global.player;
+        let player: Entity = global.player.expect("player entity");
         let player_position: &Position = position_storage.get(player).expect("player entity has no position");
         let player_interact: &PlayerInteract = player_interact_storage.get(player).expect("player entity has no player interact");
         let player_bounding_box = BoundingBox {
@@ -94,7 +107,26 @@ impl<'a> System<'a> for InteractionSystem {
             }
 
             if self.event_cache.key(Key::E) {
-                info!("Interact with {:?}!", focus);
+                let now = Instant::now();
+
+                // Debounce!
+                let should_interact = if let Some(last_interaction) = self.last_interaction {
+                    now.duration_since(last_interaction).as_millis() > 500
+                } else {
+                    true
+                };
+
+                if should_interact {
+                    info!("Interact with {:?}!", focus);
+
+                    if focus == Objects::EnterHall {
+                        global.pending_room = Some(Room::Hall)
+                    } else if focus == Objects::EnterBedroom {
+                        global.pending_room = Some(Room::Bedroom)
+                    }
+
+                    self.last_interaction = Some(now)
+                }
             }
         }
     }

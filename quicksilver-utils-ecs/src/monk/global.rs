@@ -1,15 +1,16 @@
 
 use specs::prelude::*;
-use super::interact::Objects;
+use super::{interact::Objects, room::Room};
 use quicksilver::graphics::{Image, FontRenderer};
 use send_wrapper::SendWrapper;
 
 // Single threaded for now, don't both splitting into multiple. Each system can take this as mutable...
 pub struct Global {
-    pub player: Entity,
+    pub player: Option<Entity>,
     pub focus: Option<Objects>,
     pub font: SendWrapper<FontRenderer>,
-    pub background: SendWrapper<Image>,
+    pub background: Option<SendWrapper<Image>>,
+    pub pending_room: Option<Room>
 }
 
 impl Default for Global {
@@ -19,11 +20,12 @@ impl Default for Global {
 }
 
 impl Global {
-    pub fn new(player_entity: Entity, font: FontRenderer, background: Image) -> Self {
-        let player = player_entity;
+    pub fn new(font: FontRenderer, initial_room: Room) -> Self {
+        let player = None;
         let focus = None;
         let font = SendWrapper::new(font);
-        let background = SendWrapper::new(background);
-        Global{player, focus, font, background}
+        let background = None;
+        let pending_room = Some(initial_room);
+        Global{player, focus, font, background, pending_room}
     }
 }

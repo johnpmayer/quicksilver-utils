@@ -13,8 +13,10 @@ impl<'a> System<'a> for BackgroundRender {
 
     fn run(&mut self, (global, mut render_ctx_resource): Self::SystemData) {
         trace!("Drawing background");
-        let ctx: &mut RenderContext = &mut render_ctx_resource;
-        let full: Rectangle = Rectangle::new((0.,0.,),(800.,600.));
-        ctx.gfx.draw_image(&global.background, full);
+        if let Some(background) = &global.background {
+            let ctx: &mut RenderContext = &mut render_ctx_resource;
+            let full: Rectangle = Rectangle::new((0.,0.,),(800.,600.));
+            ctx.gfx.draw_image(background, full);
+        }   
     }
 }

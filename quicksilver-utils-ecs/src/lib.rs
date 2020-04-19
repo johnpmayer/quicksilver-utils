@@ -8,7 +8,7 @@ extern crate specs_derive;
 use log::trace;
 use quicksilver::{
     geom::Rectangle,
-    graphics::{Color, Graphics, Image},
+    graphics::{Graphics, Image},
     lifecycle::{Event, EventCache, Key, Window},
 };
 use send_wrapper::SendWrapper;
