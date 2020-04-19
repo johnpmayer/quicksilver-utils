@@ -16,7 +16,8 @@ pub struct PlayerInteract {
 pub enum Objects {
     Bed,
     EnterHall,
-    EnterBedroom
+    EnterBedroom,
+    EnterCellar,
 }
 
 impl Objects {
@@ -25,6 +26,7 @@ impl Objects {
             Objects::Bed => "go to sleep",
             Objects::EnterHall => "enter the hall",
             Objects::EnterBedroom => "enter the bedroom",
+            Objects::EnterCellar => "enter the cellar",
         }
     }
 }
@@ -123,6 +125,8 @@ impl<'a> System<'a> for InteractionSystem {
                         global.pending_room = Some(Room::Hall)
                     } else if focus == Objects::EnterBedroom {
                         global.pending_room = Some(Room::Bedroom)
+                    } else if focus == Objects::EnterCellar {
+                        global.pending_room = Some(Room::Cellar)
                     }
 
                     self.last_interaction = Some(now)

@@ -8,7 +8,8 @@ use quicksilver::graphics::Image;
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Room {
     Bedroom,
-    Hall
+    Hall,
+    Cellar
 }
 
 pub struct RoomData {
@@ -16,6 +17,7 @@ pub struct RoomData {
     pub bedroom_background: Image,
     pub bedroom_bed_sprite: Image,
     pub hall_background: Image,
+    pub cellar_background: Image,
 }
 
 pub struct RoomSystem {
@@ -51,7 +53,7 @@ impl RoomSystem {
 
                     let player_entity = world
                         .create_entity()
-                        .with(Position { x: 550., y: 400. })
+                        .with(Position { x: 100., y: 350. })
                         .with(player_sprite)
                         .with(PlayerInputFlag)
                         .with(PlayerInteract { width: 64., height: 64.})
@@ -91,6 +93,8 @@ impl RoomSystem {
                         animation: None,
                     };
 
+                    // TODO: use "global.last_room" to determine start position of player
+
                     let player_entity = world
                         .create_entity()
                         .with(Position { x: 700., y: 300. })
@@ -105,9 +109,42 @@ impl RoomSystem {
                         .with(ObjectInteract{object: Objects::EnterBedroom, width: 100., height: 200.})
                         .build();
 
+                    world
+                        .create_entity()
+                        .with(Position{x: 650., y: 500.})
+                        .with(ObjectInteract{object: Objects::EnterCellar, width: 100., height: 200.})
+                        .build();
+
                     let mut global = world.get_mut::<Global>().expect("global resource");
                     global.player = Some(player_entity);
                     global.background = Some(SendWrapper::new(self.room_data.hall_background.clone()))
+                }
+                Room::Cellar => {
+                    let player_sprite = SpriteConfig {
+                        image: SendWrapper::new(self.room_data.player_sprite.clone()),
+                        width: 32,
+                        height: 32,
+                        scale: 2.,
+                        animation: None,
+                    };
+
+                    let player_entity = world
+                        .create_entity()
+                        .with(Position { x: 650., y: 300. })
+                        .with(player_sprite)
+                        .with(PlayerInputFlag)
+                        .with(PlayerInteract { width: 64., height: 64.})
+                        .build();
+                    
+                        world
+                        .create_entity()
+                        .with(Position{x: 600., y: 150.})
+                        .with(ObjectInteract{object: Objects::EnterHall, width: 100., height: 250.})
+                        .build();
+
+                    let mut global = world.get_mut::<Global>().expect("global resource");
+                    global.player = Some(player_entity);
+                    global.background = Some(SendWrapper::new(self.room_data.cellar_background.clone()))
                 }
             }
 
