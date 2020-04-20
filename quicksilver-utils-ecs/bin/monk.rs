@@ -33,6 +33,9 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     let bed_data = load_file("bed.png").await?;
     let bed_image: Image = Image::from_encoded_bytes(&gfx, &bed_data)?;
 
+    let desk_data = load_file("desk.png").await?;
+    let desk_image: Image = Image::from_encoded_bytes(&gfx, &desk_data)?;
+
     let font_data = VectorFont::load("Kingthings-Calligraphica/Kingthings_Calligraphica_2.ttf").await?;
     let font: FontRenderer = font_data.to_renderer(&gfx, 36.0)?;
 
@@ -54,6 +57,7 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         characters_spritesheet: characters_image,
         bedroom_background: bedroom_image,
         bedroom_bed_sprite: bed_image,
+        bedroom_desk_sprite: desk_image,
         hall_background: hall_image,
         cellar_background: cellar_image,
         garden_background: garden_image,

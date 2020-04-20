@@ -17,6 +17,7 @@ pub struct RoomData {
     pub characters_spritesheet: Image,
     pub bedroom_background: Image,
     pub bedroom_bed_sprite: Image,
+    pub bedroom_desk_sprite: Image,
     pub hall_background: Image,
     pub cellar_background: Image,
     pub garden_background: Image,
@@ -78,6 +79,24 @@ impl RoomSystem {
                         .with(Position { x: 600., y: 400.})
                         .with(bed_sprite)
                         .with(ObjectInteract { object: Objects::Bed, width: 32. * 3., height: 32.*3.,})
+                        .build();
+
+                    let desk_sprite_row = if progress.making_paper { 1 } else { 0};
+
+                    let desk_sprite = SpriteConfig {
+                        image: SendWrapper::new(self.room_data.bedroom_desk_sprite.clone()),
+                        row: desk_sprite_row,
+                        width: 32,
+                        height: 32,
+                        scale: 3.,
+                        animation: None,
+                    };
+
+                    world
+                        .create_entity()
+                        .with(Position { x: 300., y: 300.})
+                        .with(desk_sprite)
+                        .with(ObjectInteract { object: Objects::Desk, width: 32. * 3., height: 32.*3.,})
                         .build();
 
                     world
@@ -179,6 +198,24 @@ impl RoomSystem {
                             .with(Position{x: 350., y: 375.})
                             .with(artisan_sprite)
                             .with(ObjectInteract{object: Objects::TalkArtisan, width: 64., height: 64.})
+                            .build();
+                    }
+
+                    if progress.guests {
+                        let king_sprite = SpriteConfig {
+                            image: SendWrapper::new(self.room_data.characters_spritesheet.clone()),
+                            row: 7,
+                            width: 32,
+                            height: 32,
+                            scale: 2.,
+                            animation: None,
+                        };
+
+                        world
+                            .create_entity()
+                            .with(Position{x: 300., y: 500.})
+                            .with(king_sprite)
+                            .with(ObjectInteract{object: Objects::TalkKing, width: 64., height: 64.})
                             .build();
                     }
 

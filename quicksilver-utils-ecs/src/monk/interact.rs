@@ -22,7 +22,9 @@ pub enum Objects {
     TalkGardener,
     TalkBaker,
     TalkBeggar,
-    TalkArtisan,
+    TalkArtisan, // TODO: rename symbol
+    Desk,
+    TalkKing,
 }
 
 impl Objects {
@@ -36,7 +38,9 @@ impl Objects {
             Objects::TalkGardener => "speak with the gardener",
             Objects::TalkBaker => "speak with the baker",
             Objects::TalkBeggar => "speak with the beggar",
-            Objects::TalkArtisan => "speak with the artisan",
+            Objects::TalkArtisan => "speak with the scribe",
+            Objects::Desk => "use the desk",
+            Objects::TalkKing => "speak with the King",
         }
     }
 }
@@ -157,6 +161,12 @@ impl<'a> System<'a> for InteractionSystem {
                                 global.dialog = Some(Dialog::DelegateWheat)
                             } else if !global.progress.growing_wheat {
                                 global.dialog = Some(Dialog::PendingDelegateWheat)
+                            } else if global.progress.reply_northern_beer && !global.progress.sent_southern_monestary {
+                                global.dialog = Some(Dialog::LearnAboutSouthHops)
+                            } else if global.progress.reply_southern_hops && !global.progress.delegated_hops {
+                                global.dialog = Some(Dialog::DelegateHops)
+                            } else if global.progress.delegated_hops && !global.progress.growing_wheat {
+                                global.dialog = Some(Dialog::PendingDelegateHops)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
@@ -169,6 +179,12 @@ impl<'a> System<'a> for InteractionSystem {
                                 global.dialog = Some(Dialog::DelegateBake)
                             } else if !global.progress.baking_bread {
                                 global.dialog = Some(Dialog::PendingDelegateBake)
+                            } else if global.progress.reply_eastern_purpose && !global.progress.sent_northern_monestary {
+                                global.dialog = Some(Dialog::LearnAboutNorthBeer)
+                            } else if global.progress.growing_hops && !global.progress.delegated_beer {
+                                global.dialog = Some(Dialog::DelegateBeer)
+                            } else if global.progress.delegated_beer && !global.progress.brewing_beer {
+                                global.dialog = Some(Dialog::PendingDelegateBeer)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
@@ -185,16 +201,32 @@ impl<'a> System<'a> for InteractionSystem {
 
                         } else if focus == Objects::TalkArtisan {
 
-                            if !global.progress.charity_inspiration {
+                            if !global.progress.gave_to_charity {
                                 global.dialog = Some(Dialog::Uninspired)
                             } else if !global.progress.delegated_papermaking {
                                 global.dialog = Some(Dialog::DelegatePaper)
                             } else if !global.progress.making_paper {
                                 global.dialog = Some(Dialog::PendingDelegatePaper)
+                            } else if global.progress.making_paper && !global.progress.sent_eastern_monestary {
+                                global.dialog = Some(Dialog::LearnAboutEastPurpose)
+                            } else if global.progress.brewing_beer && !global.progress.know_invite {
+                                global.dialog = Some(Dialog::LearnAboutInvitingGuests)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
 
+                        } else if focus == Objects::Desk {
+
+                            if !global.progress.making_paper {
+                                global.dialog = Some(Dialog::OldDesk)
+                            } else if !global.progress.has_paper_today {
+                                global.dialog = Some(Dialog::NoMorePaper)
+                            } else {
+                                global.dialog = Some(Dialog::WriteLetter)
+                            }
+
+                        } else if focus == Objects::TalkKing {
+                            global.dialog = Some(Dialog::King)
                         }
 
                         self.last_interaction = Some(now)
