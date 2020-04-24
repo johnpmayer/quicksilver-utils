@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "examples/monk",
-    # "examples/project",
-    # "quicksilver-utils-async",
-    "quicksilver-utils-ecs",
-]
