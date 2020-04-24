@@ -1,9 +1,10 @@
 
 use specs::prelude::*;
-use crate::*;
+use quicksilver_utils_ecs::*;
 use super::{global::Global, interact::*};
 use log::info;
 use quicksilver::graphics::Image;
+use send_wrapper::SendWrapper;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Room {

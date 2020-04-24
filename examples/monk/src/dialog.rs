@@ -1,8 +1,8 @@
 
 use specs::prelude::*;
 use super::{global::*, room::*};
-use crate::*;
-use quicksilver::{geom::Rectangle, graphics::Color};
+use quicksilver_utils_ecs::*;
+use quicksilver::{geom::Rectangle, graphics::Color, lifecycle::{EventCache, Key}};
 use log::warn;
 
 #[derive(Clone, Copy)]

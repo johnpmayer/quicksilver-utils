@@ -4,7 +4,7 @@ use log::trace;
 use super::global::Global;
 use quicksilver::{geom::Rectangle};
 
-use crate::*;
+use quicksilver_utils_ecs::*;
 
 pub struct BackgroundRender;
 

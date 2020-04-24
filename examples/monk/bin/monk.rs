@@ -11,7 +11,7 @@ use quicksilver_utils_ecs::*;
 use send_wrapper::SendWrapper;
 use specs::prelude::*;
 
-use quicksilver_utils_ecs::monk::{
+use monk::{
  background::BackgroundRender,
  dialog::*,
  global::Global,

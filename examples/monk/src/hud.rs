@@ -4,7 +4,7 @@ use quicksilver::{geom::Vector, graphics::Color};
 use log::trace;
 use super::global::Global;
 
-use crate::*;
+use quicksilver_utils_ecs::*;
 
 pub struct HudRender;
 

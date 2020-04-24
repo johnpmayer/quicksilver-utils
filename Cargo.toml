@@ -1,4 +1,7 @@
 [workspace]
 members = [
-    "quicksilver-utils-ecs"
+    "examples/monk",
+    # "examples/project",
+    # "quicksilver-utils-async",
+    "quicksilver-utils-ecs",
 ]

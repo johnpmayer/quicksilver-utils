@@ -1,0 +1,30 @@
+[package]
+name = "quicksilver-monk"
+description = "Example project, originally for Ludum Dare 46"
+version = "0.1.0"
+authors = ["John P Mayer Jr <john.p.mayer.jr@gmail.com>"]
+edition = "2018"
+license = "MIT/Apache-2.0"
+readme = "Readme.md"
+repository = "https://github.com/johnpmayer/quicksilver-utils"
+
+[features]
+stdweb = ["quicksilver/stdweb", "quicksilver-utils-ecs/stdweb"]
+
+[dependencies]
+quicksilver-utils-ecs = { path = "../../quicksilver-utils-ecs" }
+quicksilver = "=0.4.0-alpha0.3"
+# the rest of the dependencies can float
+log = "*"
+platter = "*"
+send_wrapper = "*"
+specs = "*"
+specs-derive = "*"
+instant = "*"
+
+[lib]
+name = "monk"
+
+[[bin]]
+name = "monk"
+path = "bin/monk.rs"

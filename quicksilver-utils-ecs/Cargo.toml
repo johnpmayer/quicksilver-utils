@@ -27,9 +27,5 @@ instant = { version = "0.1.2", features = ["now"] }
 name = "quicksilver_utils_ecs"
 path = "src/lib.rs"
 
-[[bin]]
-name = "monk"
-path = "bin/monk.rs"
-
 [[example]]
 name = "adventurer"

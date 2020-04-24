@@ -14,8 +14,6 @@ use quicksilver::{
 use send_wrapper::SendWrapper;
 use specs::{prelude::*, Component, System, Write};
 
-pub mod monk;
-
 #[derive(Component)]
 pub struct Position {
     pub x: f32,
