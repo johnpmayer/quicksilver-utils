@@ -78,7 +78,8 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
                 }
 
                 if key_event.key() == Key::W && key_event.is_down() {
-                    ws.send("Hello free infrastructure").await.unwrap();
+                    let msg = WebSocketMessage::String("Hello free infrastructure".to_string());
+                    ws.send(&msg).await.unwrap();
                 }
 
                 if key_event.key() == Key::R && key_event.is_down() {

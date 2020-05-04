@@ -17,6 +17,7 @@ stdweb = ["std_web"]
 web-sys = ["web_sys", "js-sys", "wasm-bindgen"]
 
 [dependencies]
+bytes = "0.5.4" # FIXME: tighten this to match hyper
 futures-util = { version = "0.3.1", default-features = false, features = ["alloc"] }
 futures-io = "0.3.1"
 std_web = { version = "0.4.20", package = "stdweb", features = ["futures-support"], optional = true }

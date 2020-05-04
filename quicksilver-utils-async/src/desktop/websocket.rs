@@ -3,6 +3,7 @@ use url::Url;
 
 use async_std::net::TcpStream;
 use async_tls::TlsConnector;
+use bytes::Bytes;
 use soketto::{
     connection::{Error as ConnectionError, Receiver, Sender},
     handshake::{Client, Error as HandshakeError, ServerResponse},
@@ -86,9 +87,12 @@ impl AsyncWebSocket {
         Ok(AsyncWebSocket { sender, receiver })
     }
 
-    pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
+    pub async fn send(&self, msg: &WebSocketMessage) -> Result<(), WebSocketError> {
         let mut sender = self.sender.borrow_mut();
-        sender.send_text(msg).await?;
+        match msg {
+            WebSocketMessage::String(s) => sender.send_text(s).await?,
+            WebSocketMessage::Binary(b) => sender.send_binary(b).await?,
+        }
         sender.flush().await?; // otherwise it just sits there, which is just surprising for casual users
         Ok(())
     }
@@ -97,7 +101,7 @@ impl AsyncWebSocket {
         let data = self.receiver.borrow_mut().receive_data().await?;
         let message = if data.is_binary() {
             let data_slice: &[u8] = data.as_ref();
-            WebSocketMessage::Binary(Vec::from(data_slice))
+            WebSocketMessage::Binary(Bytes::copy_from_slice(data_slice))
         } else {
             let data_slice: &[u8] = data.as_ref();
             let s = String::from_utf8(Vec::from(data_slice))
@@ -105,5 +109,10 @@ impl AsyncWebSocket {
             WebSocketMessage::String(s)
         };
         Ok(message)
+    }
+
+    pub async fn close(&self) -> Result<(), WebSocketError> {
+        self.sender.borrow_mut().close().await?;
+        Ok(())
     }
 }
