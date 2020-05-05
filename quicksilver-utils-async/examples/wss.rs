@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     let url = Url::parse("https://www.google.com").expect("parse a url");
     // let url = Url::parse("https://www.websocket.org/").expect("parse a url");
     let port = url.port_or_known_default();
-    let addr = url.socket_addrs(|| port).expect("url lookup via dns")[0];
+    let addr = url.socket_addrs(|| port).expect("url lookup via dns")[0]; // THIS IS THE BUG! ipv6/ipv4, need to try all addresses
     let domain = url.host_str().expect("url host");
     // let domain = "websocket.org";
 

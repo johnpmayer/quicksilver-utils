@@ -12,7 +12,7 @@ use std::cell::RefCell;
 use std::io::Error as IoError;
 use std::sync::Arc;
 
-use log::debug;
+use log::{debug, warn};
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
 
@@ -46,14 +46,41 @@ impl<T: AsyncRead + AsyncWrite + Unpin> AsyncStream for T {}
 
 impl AsyncWebSocket {
     async fn client(url: &Url) -> Result<Client<'_, Box<dyn AsyncStream>>, WebSocketError> {
+        debug!("Creating client to url {}", url);
         let port = url.port_or_known_default();
         let host = url.host_str().expect("url host");
         let path = url.path();
         let scheme = url.scheme();
-        let address = url.socket_addrs(|| port).expect("url lookup via dns")[0];
+        let addresses = url.socket_addrs(|| port).expect("url lookup via dns");
 
-        let transport_stream = TcpStream::connect(address).await.expect("Connect");
+        debug!("Possibel addresses {:?}", addresses);
+        let address = addresses[0];
 
+        debug!("Connecting to address {}", address);
+        let transport_stream = {
+            let mut connected_stream: Option<TcpStream> = None;
+            for address in addresses {
+                let attempted_stream = TcpStream::connect(address).await;
+                match attempted_stream {
+                    Ok(stream) => {
+                        connected_stream = Some(stream);
+                        debug!("Successfully connected to address {}", address);
+                        break;
+                    }
+                    Err(e) => warn!("Couldn't connect to address {}, {}", address, e),
+                }
+            }
+            match connected_stream {
+                Some(stream) => stream,
+                None => {
+                    return Err(WebSocketError::NativeError(
+                        "All addresses failed to connect".to_string(),
+                    ))
+                }
+            }
+        };
+
+        debug!("Scheme: {}", scheme);
         let boxed_stream: Box<dyn AsyncStream> = if scheme == "wss" {
             // TODO: this hasn't yet been proven to work...
             debug!(
