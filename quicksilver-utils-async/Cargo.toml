@@ -32,6 +32,7 @@ surf = "1.0.3"
 async-std = "1.4.0"
 async-tls = "0.6.0"
 soketto = "0.3.2"
+rustls = "0.16.0"
 
 [lib]
 name = "quicksilver_utils_async"

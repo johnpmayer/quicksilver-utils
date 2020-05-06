@@ -4,11 +4,14 @@ use url::Url;
 use async_std::net::TcpStream;
 use async_tls::TlsConnector;
 use bytes::Bytes;
+use rustls::ClientConfig;
 use soketto::{
     connection::{Error as ConnectionError, Receiver, Sender},
     handshake::{Client, Error as HandshakeError, ServerResponse},
 };
 use std::cell::RefCell;
+use std::fs::File;
+use std::io::BufReader;
 use std::io::Error as IoError;
 use std::sync::Arc;
 
@@ -87,7 +90,15 @@ impl AsyncWebSocket {
                 "Starting TLS handshake for secure websocket with domain {}",
                 host
             );
-            let connector = TlsConnector::default();
+
+            // FIXME: need to inject the certificate file
+            let mut config = ClientConfig::new();
+            let root_cert_file = File::open(".certs/rootCA.crt").unwrap();
+            let mut cert_reader = BufReader::new(root_cert_file);
+            config.root_store.add_pem_file(&mut cert_reader).unwrap();
+            let connector: TlsConnector = TlsConnector::from(Arc::new(config));
+            debug!("Created connector");
+
             let handshake = connector.connect(host, transport_stream)?;
             let tls_stream = handshake.await?;
             debug!("Completed TLS handshake");
