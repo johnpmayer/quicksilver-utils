@@ -93,7 +93,7 @@ impl AsyncWebSocket {
 
             // FIXME: need to inject the certificate file
             let mut config = ClientConfig::new();
-            let root_cert_file = File::open(".certs/rootCA.crt").unwrap();
+            let root_cert_file = File::open(".certs/ecdsa/ca.cert").unwrap();
             let mut cert_reader = BufReader::new(root_cert_file);
             config.root_store.add_pem_file(&mut cert_reader).unwrap();
             let connector: TlsConnector = TlsConnector::from(Arc::new(config));
