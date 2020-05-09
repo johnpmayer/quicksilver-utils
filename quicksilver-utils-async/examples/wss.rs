@@ -1,4 +1,4 @@
-//! This file only exists to debug the issues with connecting to wss on desktop, which seems broken
+//! This file only exists to debug the issues with connecting to wss on desktop
 
 use async_std::io;
 use async_std::net::TcpStream;
@@ -35,7 +35,7 @@ fn main() -> io::Result<()> {
         // This consumes the TCP stream to ensure you are not reusing it.
         // Awaiting the handshake gives you an encrypted
         // stream back which you can use like any other.
-        let mut tls_stream = connector.connect(&domain, tcp_stream)?.await?;
+        let mut tls_stream = connector.connect(&domain, tcp_stream).await?;
 
         // We write our crafted HTTP request to it
         tls_stream.write_all(http_request.as_bytes()).await?;

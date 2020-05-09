@@ -5,17 +5,16 @@ use async_std::net::TcpStream;
 use async_tls::TlsConnector;
 use bytes::Bytes;
 use rustls::ClientConfig;
+use rustls_native_certs;
 use soketto::{
     connection::{Error as ConnectionError, Receiver, Sender},
     handshake::{Client, Error as HandshakeError, ServerResponse},
 };
 use std::cell::RefCell;
-use std::fs::File;
-use std::io::BufReader;
 use std::io::Error as IoError;
 use std::sync::Arc;
 
-use log::{debug, warn};
+use log::{debug, trace, warn};
 
 use crate::websocket::{WebSocketError, WebSocketMessage};
 
@@ -56,10 +55,10 @@ impl AsyncWebSocket {
         let scheme = url.scheme();
         let addresses = url.socket_addrs(|| port).expect("url lookup via dns");
 
-        debug!("Possibel addresses {:?}", addresses);
+        trace!("Possible addresses {:?}", addresses);
         let address = addresses[0];
 
-        debug!("Connecting to address {}", address);
+        trace!("Connecting to address {}", address);
         let transport_stream = {
             let mut connected_stream: Option<TcpStream> = None;
             for address in addresses {
@@ -67,7 +66,7 @@ impl AsyncWebSocket {
                 match attempted_stream {
                     Ok(stream) => {
                         connected_stream = Some(stream);
-                        debug!("Successfully connected to address {}", address);
+                        trace!("Successfully connected to address {}", address);
                         break;
                     }
                     Err(e) => warn!("Couldn't connect to address {}, {}", address, e),
@@ -83,23 +82,22 @@ impl AsyncWebSocket {
             }
         };
 
-        debug!("Scheme: {}", scheme);
+        trace!("Scheme: {}", scheme);
         let boxed_stream: Box<dyn AsyncStream> = if scheme == "wss" {
-            // TODO: this hasn't yet been proven to work...
             debug!(
                 "Starting TLS handshake for secure websocket with domain {}",
                 host
             );
 
-            // FIXME: need to inject the certificate file
             let mut config = ClientConfig::new();
-            let root_cert_file = File::open(".certs/ecdsa/ca.cert").unwrap();
-            let mut cert_reader = BufReader::new(root_cert_file);
-            config.root_store.add_pem_file(&mut cert_reader).unwrap();
-            let connector: TlsConnector = TlsConnector::from(Arc::new(config));
-            debug!("Created connector");
+            let native_certs =
+                rustls_native_certs::load_native_certs().expect("Could not load platform certs");
+            config.root_store = native_certs;
 
-            let handshake = connector.connect(host, transport_stream)?;
+            let connector: TlsConnector = TlsConnector::from(Arc::new(config));
+            trace!("Created connector");
+
+            let handshake = connector.connect(host, transport_stream);
             let tls_stream = handshake.await?;
             debug!("Completed TLS handshake");
             Box::new(tls_stream)
