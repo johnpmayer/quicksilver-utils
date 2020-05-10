@@ -4,8 +4,6 @@ use url::Url;
 use async_std::net::TcpStream;
 use async_tls::TlsConnector;
 use bytes::Bytes;
-use rustls::ClientConfig;
-use rustls_native_certs;
 use soketto::{
     connection::{Error as ConnectionError, Receiver, Sender},
     handshake::{Client, Error as HandshakeError, ServerResponse},
@@ -16,6 +14,7 @@ use std::sync::Arc;
 
 use log::{debug, trace, warn};
 
+use super::tls::client_config;
 use crate::websocket::{WebSocketError, WebSocketMessage};
 
 #[derive(Clone)]
@@ -46,70 +45,67 @@ trait AsyncStream: AsyncRead + AsyncWrite + Unpin {}
 
 impl<T: AsyncRead + AsyncWrite + Unpin> AsyncStream for T {}
 
+async fn client(url: &Url) -> Result<Client<'_, Box<dyn AsyncStream>>, WebSocketError> {
+    debug!("Creating client to url {}", url);
+    let port = url.port_or_known_default();
+    let host = url.host_str().expect("url host");
+    let path = url.path();
+    let scheme = url.scheme();
+    let addresses = url.socket_addrs(|| port).expect("url lookup via dns");
+
+    trace!("Possible addresses {:?}", addresses);
+    let address = addresses[0];
+
+    trace!("Connecting to address {}", address);
+    let transport_stream = {
+        let mut connected_stream: Option<TcpStream> = None;
+        for address in addresses {
+            let attempted_stream = TcpStream::connect(address).await;
+            match attempted_stream {
+                Ok(stream) => {
+                    connected_stream = Some(stream);
+                    trace!("Successfully connected to address {}", address);
+                    break;
+                }
+                Err(e) => warn!("Couldn't connect to address {}, {}", address, e),
+            }
+        }
+        match connected_stream {
+            Some(stream) => stream,
+            None => {
+                return Err(WebSocketError::NativeError(
+                    "All addresses failed to connect".to_string(),
+                ))
+            }
+        }
+    };
+
+    trace!("Scheme: {}", scheme);
+    let boxed_stream: Box<dyn AsyncStream> = if scheme == "wss" {
+        debug!(
+            "Starting TLS handshake for secure websocket with domain {}",
+            host
+        );
+
+        let config = client_config();
+
+        let connector: TlsConnector = TlsConnector::from(Arc::new(config));
+        trace!("Created connector");
+
+        let handshake = connector.connect(host, transport_stream);
+        let tls_stream = handshake.await?;
+        debug!("Completed TLS handshake");
+        Box::new(tls_stream)
+    } else {
+        Box::new(transport_stream)
+    };
+
+    Ok(Client::new(boxed_stream, host, path))
+}
+
 impl AsyncWebSocket {
-    async fn client(url: &Url) -> Result<Client<'_, Box<dyn AsyncStream>>, WebSocketError> {
-        debug!("Creating client to url {}", url);
-        let port = url.port_or_known_default();
-        let host = url.host_str().expect("url host");
-        let path = url.path();
-        let scheme = url.scheme();
-        let addresses = url.socket_addrs(|| port).expect("url lookup via dns");
-
-        trace!("Possible addresses {:?}", addresses);
-        let address = addresses[0];
-
-        trace!("Connecting to address {}", address);
-        let transport_stream = {
-            let mut connected_stream: Option<TcpStream> = None;
-            for address in addresses {
-                let attempted_stream = TcpStream::connect(address).await;
-                match attempted_stream {
-                    Ok(stream) => {
-                        connected_stream = Some(stream);
-                        trace!("Successfully connected to address {}", address);
-                        break;
-                    }
-                    Err(e) => warn!("Couldn't connect to address {}, {}", address, e),
-                }
-            }
-            match connected_stream {
-                Some(stream) => stream,
-                None => {
-                    return Err(WebSocketError::NativeError(
-                        "All addresses failed to connect".to_string(),
-                    ))
-                }
-            }
-        };
-
-        trace!("Scheme: {}", scheme);
-        let boxed_stream: Box<dyn AsyncStream> = if scheme == "wss" {
-            debug!(
-                "Starting TLS handshake for secure websocket with domain {}",
-                host
-            );
-
-            let mut config = ClientConfig::new();
-            let native_certs =
-                rustls_native_certs::load_native_certs().expect("Could not load platform certs");
-            config.root_store = native_certs;
-
-            let connector: TlsConnector = TlsConnector::from(Arc::new(config));
-            trace!("Created connector");
-
-            let handshake = connector.connect(host, transport_stream);
-            let tls_stream = handshake.await?;
-            debug!("Completed TLS handshake");
-            Box::new(tls_stream)
-        } else {
-            Box::new(transport_stream)
-        };
-
-        Ok(Client::new(boxed_stream, host, path))
-    }
-
     pub async fn connect(url: &Url) -> Result<Self, WebSocketError> {
-        let mut client = AsyncWebSocket::client(url).await?;
+        let mut client = client(url).await?;
 
         let (sender, receiver) = match client.handshake().await? {
             ServerResponse::Accepted { .. } => client.into_builder().finish(),
