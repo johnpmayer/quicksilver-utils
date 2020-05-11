@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use http::Uri;
-use log::{debug, trace};
+use log::trace;
 use protobuf::Message;
 
 #[derive(Debug)]

@@ -4,7 +4,7 @@ extern crate url;
 
 use log::{debug, info};
 use quicksilver_utils_async::{
-    request::get_resource,
+    // request::get_resource,
     task_context::TaskContext,
     time::sleep_ms,
     websocket::{WebSocket, WebSocketMessage},
@@ -23,7 +23,7 @@ enum CustomEvent {
     OnePingOnly,
     Ticked,
     EchoResponse(WebSocketMessage),
-    Resource(String),
+    // Resource(String),
 }
 
 async fn tick_loop(task_context: TaskContext<'_, CustomEvent>) {
@@ -82,15 +82,15 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
                     ws.send(&msg).await.unwrap();
                 }
 
-                if key_event.key() == Key::R && key_event.is_down() {
-                    let cloned_task_context = task_context.clone();
-                    task_context.spawn(async move {
-                        let response = get_resource("https://jsonplaceholder.typicode.com/todos/1")
-                            .await
-                            .expect("HTTP GET success");
-                        cloned_task_context.dispatch(CustomEvent::Resource(response))
-                    });
-                }
+                // if key_event.key() == Key::R && key_event.is_down() {
+                //     let cloned_task_context = task_context.clone();
+                //     task_context.spawn(async move {
+                //         let response = get_resource("https://jsonplaceholder.typicode.com/todos/1")
+                //             .await
+                //             .expect("HTTP GET success");
+                //         cloned_task_context.dispatch(CustomEvent::Resource(response))
+                //     });
+                // }
             }
 
             debug!("BlindsEvent: {:?}", ev);
