@@ -34,12 +34,9 @@ protobuf = { version = "2.14.0", features = ["bytes"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-std = "1.4.0"
 async-tls = "0.7.0"
-hyper = "0.13.5"
-hyper-rustls = "0.20.0"
 soketto = "0.3.2"
-rustls = "0.17.0"
-rustls-native-certs = "0.3.0"
-# tokio-rustls = "0.13.0"
+rustls = "0.17.0"               # Not needed anymore? Only websocket can use this
+rustls-native-certs = "0.3.0"   # Not needed anymore? Only websocket can use this
 
 [lib]
 name = "quicksilver_utils_async"
