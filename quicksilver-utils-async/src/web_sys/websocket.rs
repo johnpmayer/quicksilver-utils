@@ -13,6 +13,8 @@ use url::Url;
 use wasm_bindgen::prelude::{Closure, JsValue};
 use wasm_bindgen::JsCast;
 
+use bytes::Bytes;
+
 use crate::websocket::{WebSocketError, WebSocketMessage};
 
 use log::trace;
@@ -147,10 +149,19 @@ impl AsyncWebSocket {
         Ok(async_ws)
     }
 
-    pub async fn send(&self, msg: &str) -> Result<(), WebSocketError> {
+    pub async fn send(&self, msg: &WebSocketMessage) -> Result<(), WebSocketError> {
         trace!("Send");
         let inner: &mut AsyncWebSocketInner = &mut *self.inner.borrow_mut();
-        inner.ws.send_with_str(msg)?;
+        match msg {
+            WebSocketMessage::String(s) => inner.ws.send_with_str(s)?,
+            WebSocketMessage::Binary(b) => inner.ws.send_with_u8_array(b)?,
+        }
+        Ok(())
+    }
+
+    pub async fn close(&self) -> Result<(), WebSocketError> {
+        let inner: &mut AsyncWebSocketInner = &mut *self.inner.borrow_mut();
+        inner.ws.close()?;
         Ok(())
     }
 
@@ -186,7 +197,8 @@ impl AsyncWebSocket {
             None => {
                 let buf: &ArrayBuffer = data.as_ref().unchecked_ref(); // consider using JsCast::dyn_into for safety?
                 let vec: Vec<u8> = Uint8Array::new(buf).to_vec();
-                WebSocketMessage::Binary(vec)
+                let bytes = Bytes::from(vec);
+                WebSocketMessage::Binary(bytes)
             }
         };
 

@@ -15,10 +15,10 @@ pub type Result<T> = std::result::Result<T, RequestError>;
 use crate::desktop::request as platform;
 
 #[cfg(all(target_arch = "wasm32", feature = "stdweb"))]
-use crate::std_web::request;
+use crate::std_web::request as platform;
 
 #[cfg(all(target_arch = "wasm32", feature = "web-sys"))]
-use crate::web_sys::request;
+use crate::web_sys::request as platform;
 
 #[async_trait]
 pub trait ServiceClient {
