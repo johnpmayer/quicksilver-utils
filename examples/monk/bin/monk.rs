@@ -1,32 +1,26 @@
-
 use log::{debug, trace};
 use platter::load_file;
 use quicksilver::{
-    graphics::{Graphics, Image, VectorFont, FontRenderer},
-    lifecycle::{run, Event, EventCache, EventStream, Settings, Window},
-    mint::Vector2,
-    Result,
+    geom::Vector,
+    graphics::{FontRenderer, Graphics, Image, VectorFont},
+    input::Input,
+    run, Result, Settings, Window,
 };
 use quicksilver_utils_ecs::*;
 use send_wrapper::SendWrapper;
 use specs::prelude::*;
 
 use monk::{
- background::BackgroundRender,
- dialog::*,
- global::Global,
- room::*,
- interact::*,
- hud::HudRender
+    background::BackgroundRender, dialog::*, global::Global, hud::HudRender, interact::*, room::*,
 };
 
 fn main() {
     let mut settings = Settings::default();
-    settings.size = Vector2::from([800.,600.]);
+    settings.size = Vector::new(800., 600.);
     run(settings, app)
 }
 
-async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Result<()> {
+async fn app(window: Window, gfx: Graphics, input: Input) -> Result<()> {
     let characters_data = load_file("monk_characters.png").await?;
     let characters_image: Image = Image::from_encoded_bytes(&gfx, &characters_data)?;
 
@@ -36,7 +30,8 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
     let desk_data = load_file("desk.png").await?;
     let desk_image: Image = Image::from_encoded_bytes(&gfx, &desk_data)?;
 
-    let font_data = VectorFont::load("Kingthings-Calligraphica/Kingthings_Calligraphica_2.ttf").await?;
+    let font_data =
+        VectorFont::load("Kingthings-Calligraphica/Kingthings_Calligraphica_2.ttf").await?;
     let font: FontRenderer = font_data.to_renderer(&gfx, 36.0)?;
 
     // Note: these are camera photos of a drawing
@@ -72,10 +67,13 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         window: SendWrapper::new(window),
     });
 
+    world.insert(InputContext {
+        input: SendWrapper::new(input),
+    });
+
     let now = instant::now();
 
     world.insert(TimeContext { now });
-    world.insert(EventBuffer { events: Vec::new() });
 
     world.register::<Position>();
     world.register::<SpriteConfig>();
@@ -87,33 +85,33 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
 
     debug!("attempt to insert a Global");
     world.insert(Global::new(font, Room::Bedroom));
-    
     let mut sprite_system = RenderSprites;
-    let mut move_system = WasdMovement {
-        event_cache: EventCache::new(),
-    };
+    let mut move_system = WasdMovement;
     let mut interaction_system = InteractionSystem::new();
     let mut hud_render_system = HudRender; // we could inject the font here instead of the Global resource...
     let mut dialog_render_system = DialogRender;
     let mut background_render_system = BackgroundRender;
-    let room_system = RoomSystem{room_data: SendWrapper::new(room_data)};
+    let room_system = RoomSystem {
+        room_data: SendWrapper::new(room_data),
+    };
 
     room_system.setup_new_room(&mut world);
 
     debug!("Entering main loop");
 
-    'main: loop {
+    loop {
         let now: f64 = instant::now();
         *world.write_resource::<TimeContext>() = TimeContext { now };
 
         trace!("In the loop");
 
-        let mut buffer: Vec<Event> = Vec::new();
-        while let Some(ev) = event_stream.next_event().await {
-            trace!("Quicksilver event: {:?}", ev);
-            buffer.push(ev)
+        {
+            let ctx = world.get_mut::<InputContext>().expect("has input context");
+            let input: &mut Input = &mut ctx.input;
+            while let Some(ev) = input.next_event().await {
+                debug!("Quicksilver event: {:?}", ev);
+            }
         }
-        (*world.write_resource::<EventBuffer>()).events = buffer;
 
         move_system.run_now(&world);
         interaction_system.run_now(&world);
@@ -125,7 +123,11 @@ async fn app(window: Window, gfx: Graphics, mut event_stream: EventStream) -> Re
         hud_render_system.run_now(&world);
         dialog_render_system.run_now(&world);
 
-        let ctx = world.get_mut::<RenderContext>().expect("has render context");
-        ctx.gfx.present(&ctx.window).expect("present");
+        {
+            let ctx = world
+                .get_mut::<RenderContext>()
+                .expect("has render context");
+            ctx.gfx.present(&ctx.window).expect("present")
+        }
     }
 }

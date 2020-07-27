@@ -1,10 +1,9 @@
-
-use specs::{prelude::*, Component, System, Write};
-use quicksilver_utils_ecs::*;
-use super::{global::Global, room::Room, dialog::Dialog};
-use log::{info, trace};
-use quicksilver::lifecycle::{Key, EventCache};
+use super::{dialog::Dialog, global::Global, room::Room};
 use instant::Instant;
+use log::{info, trace};
+use quicksilver::input::Key;
+use quicksilver_utils_ecs::*;
+use specs::{prelude::*, Component, System, Write};
 
 #[derive(Component)]
 pub struct PlayerInteract {
@@ -53,14 +52,12 @@ pub struct ObjectInteract {
 }
 
 pub struct InteractionSystem {
-    event_cache: EventCache,
     last_interaction: Option<Instant>,
 }
 
 impl InteractionSystem {
     pub fn new() -> Self {
-        InteractionSystem { 
-            event_cache: EventCache::new(),
+        InteractionSystem {
             last_interaction: None,
         }
     }
@@ -69,7 +66,7 @@ impl InteractionSystem {
 struct BoundingBox<'a> {
     pub position: &'a Position,
     pub width: f32,
-    pub height: f32
+    pub height: f32,
 }
 
 fn overlaps(a: &BoundingBox, b: &BoundingBox) -> bool {
@@ -83,23 +80,29 @@ fn overlaps(a: &BoundingBox, b: &BoundingBox) -> bool {
 impl<'a> System<'a> for InteractionSystem {
     type SystemData = (
         Write<'a, Global>,
+        Read<'a, InputContext>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, PlayerInteract>,
         ReadStorage<'a, ObjectInteract>,
-        Read<'a, EventBuffer>,
     );
 
     fn run(
         &mut self,
-        (mut global, position_storage, player_interact_storage, object_interact_storage, event_buffer): Self::SystemData,
+        (
+            mut global,
+            input_resource,
+            position_storage,
+            player_interact_storage,
+            object_interact_storage,
+        ): Self::SystemData,
     ) {
-        for event in event_buffer.events.iter() {
-            self.event_cache.process_event(event)
-        }
-        
         let player: Entity = global.player.expect("player entity");
-        let player_position: &Position = position_storage.get(player).expect("player entity has no position");
-        let player_interact: &PlayerInteract = player_interact_storage.get(player).expect("player entity has no player interact");
+        let player_position: &Position = position_storage
+            .get(player)
+            .expect("player entity has no position");
+        let player_interact: &PlayerInteract = player_interact_storage
+            .get(player)
+            .expect("player entity has no player interact");
         let player_bounding_box = BoundingBox {
             position: player_position,
             width: player_interact.width,
@@ -107,7 +110,9 @@ impl<'a> System<'a> for InteractionSystem {
         };
 
         global.focus = None;
-        for (object_position, object_interact) in (&position_storage, &object_interact_storage).join() {
+        for (object_position, object_interact) in
+            (&position_storage, &object_interact_storage).join()
+        {
             let object_bounding_box = BoundingBox {
                 position: object_position,
                 width: object_interact.width,
@@ -115,12 +120,14 @@ impl<'a> System<'a> for InteractionSystem {
             };
             if overlaps(&player_bounding_box, &object_bounding_box) {
                 global.focus = Some(object_interact.object);
-                break
+                break;
             }
         }
 
+        let input = &input_resource.input;
+
         if let Some(dialog) = global.dialog {
-            let should_close = dialog.process(&mut global, &self.event_cache);
+            let should_close = dialog.process(&mut global, input);
             if should_close {
                 global.dialog = None
             }
@@ -128,7 +135,7 @@ impl<'a> System<'a> for InteractionSystem {
             if let Some(focus) = global.focus {
                 trace!("We have a focus: {:?}", focus);
 
-                if self.event_cache.key(Key::E) {
+                if input.key_down(Key::E) {
                     let now = Instant::now();
 
                     // Debounce!
@@ -152,45 +159,50 @@ impl<'a> System<'a> for InteractionSystem {
                         }
 
                         if focus == Objects::Bed {
-
                             global.dialog = Some(Dialog::SleepConfirm)
-
                         } else if focus == Objects::TalkGardener {
-
                             if !global.progress.delegated_wheat {
                                 global.dialog = Some(Dialog::DelegateWheat)
                             } else if !global.progress.growing_wheat {
                                 global.dialog = Some(Dialog::PendingDelegateWheat)
-                            } else if global.progress.reply_northern_beer && !global.progress.sent_southern_monestary {
+                            } else if global.progress.reply_northern_beer
+                                && !global.progress.sent_southern_monestary
+                            {
                                 global.dialog = Some(Dialog::LearnAboutSouthHops)
-                            } else if global.progress.reply_southern_hops && !global.progress.delegated_hops {
+                            } else if global.progress.reply_southern_hops
+                                && !global.progress.delegated_hops
+                            {
                                 global.dialog = Some(Dialog::DelegateHops)
-                            } else if global.progress.delegated_hops && !global.progress.growing_wheat {
+                            } else if global.progress.delegated_hops
+                                && !global.progress.growing_wheat
+                            {
                                 global.dialog = Some(Dialog::PendingDelegateHops)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
-
                         } else if focus == Objects::TalkBaker {
-
                             if !global.progress.growing_wheat {
                                 global.dialog = Some(Dialog::NoWheatToBake)
                             } else if !global.progress.delegated_baking {
                                 global.dialog = Some(Dialog::DelegateBake)
                             } else if !global.progress.baking_bread {
                                 global.dialog = Some(Dialog::PendingDelegateBake)
-                            } else if global.progress.reply_eastern_purpose && !global.progress.sent_northern_monestary {
+                            } else if global.progress.reply_eastern_purpose
+                                && !global.progress.sent_northern_monestary
+                            {
                                 global.dialog = Some(Dialog::LearnAboutNorthBeer)
-                            } else if global.progress.growing_hops && !global.progress.delegated_beer {
+                            } else if global.progress.growing_hops
+                                && !global.progress.delegated_beer
+                            {
                                 global.dialog = Some(Dialog::DelegateBeer)
-                            } else if global.progress.delegated_beer && !global.progress.brewing_beer {
+                            } else if global.progress.delegated_beer
+                                && !global.progress.brewing_beer
+                            {
                                 global.dialog = Some(Dialog::PendingDelegateBeer)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
-
                         } else if focus == Objects::TalkBeggar {
-
                             if !global.progress.baking_bread {
                                 global.dialog = Some(Dialog::NoBreadToGive)
                             } else if !global.progress.gave_to_charity {
@@ -198,25 +210,23 @@ impl<'a> System<'a> for InteractionSystem {
                             } else {
                                 global.dialog = Some(Dialog::ThanksForBread)
                             }
-
                         } else if focus == Objects::TalkArtisan {
-
                             if !global.progress.gave_to_charity {
                                 global.dialog = Some(Dialog::Uninspired)
                             } else if !global.progress.delegated_papermaking {
                                 global.dialog = Some(Dialog::DelegatePaper)
                             } else if !global.progress.making_paper {
                                 global.dialog = Some(Dialog::PendingDelegatePaper)
-                            } else if global.progress.making_paper && !global.progress.sent_eastern_monestary {
+                            } else if global.progress.making_paper
+                                && !global.progress.sent_eastern_monestary
+                            {
                                 global.dialog = Some(Dialog::LearnAboutEastPurpose)
                             } else if global.progress.brewing_beer && !global.progress.know_invite {
                                 global.dialog = Some(Dialog::LearnAboutInvitingGuests)
                             } else {
                                 global.dialog = Some(Dialog::Greet)
                             }
-
                         } else if focus == Objects::Desk {
-
                             if !global.progress.making_paper {
                                 global.dialog = Some(Dialog::OldDesk)
                             } else if !global.progress.has_paper_today {
@@ -224,7 +234,6 @@ impl<'a> System<'a> for InteractionSystem {
                             } else {
                                 global.dialog = Some(Dialog::WriteLetter)
                             }
-
                         } else if focus == Objects::TalkKing {
                             global.dialog = Some(Dialog::King)
                         }

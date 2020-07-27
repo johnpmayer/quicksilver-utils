@@ -68,11 +68,9 @@ async fn app(window: Window, gfx: Graphics, input: Input) -> Result<()> {
         window: SendWrapper::new(window),
     });
 
-    let input_ctx = InputContext {
+    world.insert(InputContext {
         input: SendWrapper::new(input),
-    };
-
-    world.insert(input_ctx);
+    });
 
     let now = instant::now();
 
