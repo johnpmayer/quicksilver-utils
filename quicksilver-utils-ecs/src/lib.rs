@@ -5,14 +5,16 @@ extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 
-use log::trace;
+use log::{debug, trace};
 use quicksilver::{
-    geom::Rectangle,
+    geom::{Rectangle, Vector},
     graphics::{Graphics, Image},
-    lifecycle::{Event, EventCache, Key, Window},
+    input::{Input, Key},
+    Window,
 };
 use send_wrapper::SendWrapper;
 use specs::{prelude::*, Component, System, Write};
+use std::sync::{Arc, Mutex};
 
 #[derive(Component)]
 pub struct Position {
@@ -75,7 +77,6 @@ impl<'a> System<'a> for RenderSprites {
     ) {
         let time_ctx: &TimeContext = &time_ctx_resource;
         let ctx: &mut RenderContext = &mut render_ctx_resource;
-        // ctx.gfx.clear(Color::from_rgba(200,200,200,1.));
         trace!("Running RenderSprites");
         for (position, sprite) in (&position_storage, &sprite_storage).join() {
             let sprite_offset: u32 = if let Some(animation) = &sprite.animation {
@@ -97,66 +98,87 @@ impl<'a> System<'a> for RenderSprites {
             };
             let sprite_offset = sprite_offset * sprite.width;
             let sprite_row = sprite.row * sprite.height;
-            let sprite_position = Rectangle::new((sprite_offset, sprite_row), (sprite.width, sprite.height));
+            let sprite_position = Rectangle::new(
+                Vector::new(sprite_offset as f32, sprite_row as f32),
+                Vector::new(sprite.width as f32, sprite.height as f32),
+            );
             let location_size = sprite.width as f32 * sprite.scale;
-            let location = Rectangle::new((position.x, position.y), (location_size, location_size));
-            trace!(
+            let location = Rectangle::new(
+                Vector::new(position.x, position.y),
+                Vector::new(location_size, location_size),
+            );
+            debug!(
                 "Drawing dude from sprite {:?} at {:?}",
                 sprite_position, location
             );
             ctx.gfx
                 .draw_subimage(&sprite.image, sprite_position, location);
         }
-        // ctx.gfx.present(&ctx.window).expect("present"); // FIXME probably a separate system?
     }
 }
 
-// Could replace this with specific events
-#[derive(Default)]
-pub struct EventBuffer {
-    pub events: Vec<Event>,
+#[derive(Clone)]
+pub struct InputContext {
+    pub input: Arc<Mutex<SendWrapper<Input>>>, // quicksilver EventStream uses RefCell
 }
 
-pub struct WasdMovement {
-    pub event_cache: EventCache,
+impl InputContext {
+    // mutability is not required, but this helps enforce the ECS system has a write lock on the object
+    pub fn with_locked_input<T, F>(&mut self, f: F) -> T
+    where
+        F: FnOnce(&mut Input) -> T,
+    {
+        let input_arc: &Arc<Mutex<SendWrapper<Input>>> = &self.input;
+        let mut input_wrapper = input_arc.lock().unwrap();
+        let input: &mut Input = &mut input_wrapper;
+        f(input)
+    }
 }
+
+impl Default for InputContext {
+    fn default() -> Self {
+        panic!("must be injected...")
+    }
+}
+
+pub struct WasdMovement;
 
 impl<'a> System<'a> for WasdMovement {
     type SystemData = (
-        Read<'a, EventBuffer>,
+        Write<'a, InputContext>,
         ReadStorage<'a, PlayerInputFlag>,
         WriteStorage<'a, Position>,
     );
 
     fn run(
         &mut self,
-        (eventbuffer_resource, player_input_flag_storage, mut position_storage): Self::SystemData,
+        (mut input_ctx_resource, player_input_flag_storage, mut position_storage): Self::SystemData,
     ) {
         trace!("Running WasdMovement");
-        let eventbuffer: &EventBuffer = &eventbuffer_resource;
 
-        let speed = 3.; // configurable per entity, and should also take into account tick delta
+        let input_ctx: &mut InputContext = &mut input_ctx_resource;
+
+        let speed = 3.; // TODO, configurable per entity, and should also take into account tick delta
         let mut velocity = [0., 0.];
 
-        for event in eventbuffer.events.iter() {
-            self.event_cache.process_event(event)
-        }
+        let input_arc: &Arc<Mutex<SendWrapper<Input>>> = &input_ctx.input;
+        let mut input_wrapper = input_arc.lock().unwrap();
+        let input: &mut Input = &mut input_wrapper;
 
-        if self.event_cache.key(Key::W) {
+        // input_ctx.with_locked_input(move |input| {
+        if input.key_down(Key::W) {
             velocity[1] = -speed;
         }
-
-        if self.event_cache.key(Key::A) {
+        if input.key_down(Key::A) {
             velocity[0] = -speed;
         }
-
-        if self.event_cache.key(Key::S) {
+        if input.key_down(Key::S) {
             velocity[1] = speed;
         }
-
-        if self.event_cache.key(Key::D) {
+        if input.key_down(Key::D) {
             velocity[0] = speed;
         }
+        // });
 
         for (_flag, position) in (&player_input_flag_storage, &mut position_storage).join() {
             position.x += velocity[0];

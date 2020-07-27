@@ -13,7 +13,7 @@ stdweb = ["quicksilver/stdweb", "quicksilver-utils-ecs/stdweb"]
 
 [dependencies]
 quicksilver-utils-ecs = { path = "../../quicksilver-utils-ecs" }
-quicksilver = "=0.4.0-alpha0.3"
+quicksilver = "=0.4.0-alpha0.5"
 # the rest of the dependencies can float
 log = "*"
 platter = "*"

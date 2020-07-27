@@ -21,7 +21,7 @@ web-sys = ["web_sys", "quicksilver/web-sys", "quicksilver-utils-async/web-sys", 
 
 [dependencies]
 log = "0.4"
-quicksilver = "=0.4.0-alpha0.3"
+quicksilver = "=0.4.0-alpha0.5"
 quicksilver-utils-async = { path = "../../quicksilver-utils-async" }
 url = "2.1.1"
 wasm-bindgen = "0.2.45"
