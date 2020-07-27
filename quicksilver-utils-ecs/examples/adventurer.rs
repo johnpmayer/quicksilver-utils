@@ -16,7 +16,6 @@ use send_wrapper::SendWrapper;
 use specs::prelude::*;
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 #[derive(Eq, Hash, PartialEq)]
 enum Animation {
@@ -70,10 +69,10 @@ async fn app(window: Window, gfx: Graphics, input: Input) -> Result<()> {
     });
 
     let input_ctx = InputContext {
-        input: Arc::new(Mutex::new(SendWrapper::new(input))),
+        input: SendWrapper::new(input),
     };
 
-    world.insert(input_ctx.clone());
+    world.insert(input_ctx);
 
     let now = instant::now();
 
@@ -127,9 +126,8 @@ async fn app(window: Window, gfx: Graphics, input: Input) -> Result<()> {
         trace!("In the loop");
 
         {
-            let input_arc: &Arc<Mutex<SendWrapper<Input>>> = &input_ctx.input;
-            let mut input_wrapper = input_arc.lock().unwrap();
-            let input: &mut Input = &mut input_wrapper;
+            let ctx = world.get_mut::<InputContext>().expect("has input context");
+            let input: &mut Input = &mut ctx.input;
             while let Some(ev) = input.next_event().await {
                 debug!("Quicksilver event: {:?}", ev);
             }

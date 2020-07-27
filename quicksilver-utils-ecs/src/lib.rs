@@ -14,7 +14,6 @@ use quicksilver::{
 };
 use send_wrapper::SendWrapper;
 use specs::{prelude::*, Component, System, Write};
-use std::sync::{Arc, Mutex};
 
 #[derive(Component)]
 pub struct Position {
@@ -117,22 +116,8 @@ impl<'a> System<'a> for RenderSprites {
     }
 }
 
-#[derive(Clone)]
 pub struct InputContext {
-    pub input: Arc<Mutex<SendWrapper<Input>>>, // quicksilver EventStream uses RefCell
-}
-
-impl InputContext {
-    // mutability is not required, but this helps enforce the ECS system has a write lock on the object
-    pub fn with_locked_input<T, F>(&mut self, f: F) -> T
-    where
-        F: FnOnce(&mut Input) -> T,
-    {
-        let input_arc: &Arc<Mutex<SendWrapper<Input>>> = &self.input;
-        let mut input_wrapper = input_arc.lock().unwrap();
-        let input: &mut Input = &mut input_wrapper;
-        f(input)
-    }
+    pub input: SendWrapper<Input>, // quicksilver EventStream uses RefCell
 }
 
 impl Default for InputContext {
@@ -161,11 +146,8 @@ impl<'a> System<'a> for WasdMovement {
         let speed = 3.; // TODO, configurable per entity, and should also take into account tick delta
         let mut velocity = [0., 0.];
 
-        let input_arc: &Arc<Mutex<SendWrapper<Input>>> = &input_ctx.input;
-        let mut input_wrapper = input_arc.lock().unwrap();
-        let input: &mut Input = &mut input_wrapper;
+        let input: &mut Input = &mut input_ctx.input;
 
-        // input_ctx.with_locked_input(move |input| {
         if input.key_down(Key::W) {
             velocity[1] = -speed;
         }
@@ -178,7 +160,6 @@ impl<'a> System<'a> for WasdMovement {
         if input.key_down(Key::D) {
             velocity[0] = speed;
         }
-        // });
 
         for (_flag, position) in (&player_input_flag_storage, &mut position_storage).join() {
             position.x += velocity[0];
