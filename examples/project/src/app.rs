@@ -12,8 +12,8 @@ use quicksilver_utils_async::{
 
 use quicksilver::{
     graphics::Graphics,
-    lifecycle::{Event as BlindsEvent, EventStream, Key, Window},
-    Result,
+    input::{Event as BlindsEvent, Input, Key},
+    Result, Window,
 };
 
 use url::Url;
@@ -40,7 +40,7 @@ async fn read_websocket_loop(task_context: TaskContext<'_, CustomEvent>, ws: Web
     }
 }
 
-pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream) -> Result<()> {
+pub async fn app(_window: Window, _gfx: Graphics, mut input: Input) -> Result<()> {
     let mut task_context: TaskContext<CustomEvent> = TaskContext::new();
 
     task_context.spawn(tick_loop(task_context.clone()));
@@ -64,7 +64,7 @@ pub async fn app(_window: Window, _gfx: Graphics, mut event_stream: EventStream)
             info!("CustomEvent: {:?}", custom_event)
         }
 
-        while let Some(ev) = event_stream.next_event().await {
+        while let Some(ev) = input.next_event().await {
             if let BlindsEvent::KeyboardInput(key_event) = &ev {
                 if key_event.key() == Key::Escape && key_event.is_down() {
                     break 'main;
