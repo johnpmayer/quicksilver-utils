@@ -17,7 +17,7 @@ stdweb = ["quicksilver/stdweb", "instant/stdweb"]
 [dependencies]
 specs = "0.15"
 specs-derive = "0.4.0"
-quicksilver = "=0.4.0-alpha0.5"
+quicksilver = "=0.4.0-alpha0.7"
 send_wrapper = "0.4.0"
 log = "0.4"
 platter = "0.1.4"
