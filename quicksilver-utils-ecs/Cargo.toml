@@ -23,6 +23,9 @@ log = "0.4"
 platter = "0.1.4"
 instant = { version = "0.1.2", features = ["now"] }
 
+[dev-dependencies]
+mergui = { path = "../../mergui" } # Checkout as sibling to quicksilver-utils
+
 [lib]
 name = "quicksilver_utils_ecs"
 path = "src/lib.rs"
